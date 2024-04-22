@@ -1,0 +1,10 @@
+*.o
+*.a
+*.log
+build
+devel
+log
+install
+cpp_pubsub
+.catkin_tools
+

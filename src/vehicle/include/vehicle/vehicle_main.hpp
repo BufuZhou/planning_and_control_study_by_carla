@@ -11,13 +11,12 @@
 #include "carla_msgs/msg/carla_status.hpp"
 #include "carla_msgs/msg/carla_ego_vehicle_control.hpp"
 
-using namespace std::chrono_literals;
 using std::placeholders::_1;
 namespace vehicle {
 
-class CarlaSimulationVehicle : public rclcpp::Node {
+class CarlaVehicleNode : public rclcpp::Node {
  public:
-  CarlaSimulationVehicle();
+  CarlaVehicleNode();
   // ~vehicle();
   void get_vehicle_state();
   void set_vehicle_command();
@@ -26,8 +25,18 @@ class CarlaSimulationVehicle : public rclcpp::Node {
   double vehicle_velocity_;
   double target_vehicle_accel_;
   double target_steering_angle_;
-  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_;
+  rclcpp::Publisher<carla_msgs::msg::CarlaEgoVehicleControl>::SharedPtr vehicle_control_publisher_;
   carla_msgs::msg::CarlaEgoVehicleControl control_cmd;
+  rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_;
+  size_t count_;
+  void timer_callback()
+  {
+    auto message = std_msgs::msg::String();
+    message.data = "Hello, world! " + std::to_string(count_++);
+    RCLCPP_INFO(this->get_logger(), "Publishing: '%s'", message.data.c_str());
+    publisher_->publish(message);
+  }
 };
 
 }  //  namespace control

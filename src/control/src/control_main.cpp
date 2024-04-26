@@ -17,6 +17,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
+#include "control_cmd.pb.h"
 
 using namespace std::chrono_literals;
 
@@ -45,6 +46,9 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_;
   size_t count_;
+  rclcpp::Publisher<control::ControlCommand>::SharedPtr
+    ego_vehicle_control_cmd_publisher_;
+  control::ControlCommand control_cmd_;
 };
 
 int main(int argc, char * argv[])

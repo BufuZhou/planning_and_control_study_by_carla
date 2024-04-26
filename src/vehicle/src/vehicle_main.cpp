@@ -24,19 +24,27 @@ using std::placeholders::_1;
 namespace vehicle {
 
 CarlaVehicleNode::CarlaVehicleNode() : Node("Control") , count_(0) {
-  vehicle_control_publisher_ =
+  // get ego vehicle status
+  ego_vehicle_status_subscriber_ =
+      this->create_subscription<carla_msgs::msg::CarlaEgoVehicleStatus>(
+          "/carla/ego_vehicle/vehicle_status", 10,
+          std::bind(&CarlaVehicleNode::get_vehicle_state, this, _1));
+
+  // set command to carla vehicle
+  ego_vehicle_control_cmd_publisher_ =
       this->create_publisher<carla_msgs::msg::CarlaEgoVehicleControl>(
           "/carla/ego_vehicle/vehicle_control_cmd", 10);
-
-  publisher_ = this->create_publisher<std_msgs::msg::String>("topic", 10);
-  // timer_ = this->create_wall_timer(
-  //     500ms, std::bind(&CarlaVehicleNode::timer_callback, this));
   timer_ = this->create_wall_timer(
       500ms, std::bind(&CarlaVehicleNode::set_vehicle_command, this));
 }
 
-void CarlaVehicleNode::get_vehicle_state() {
+void CarlaVehicleNode::get_vehicle_state(
+    carla_msgs::msg::CarlaEgoVehicleStatus::SharedPtr msg) {
   //
+  vehicle_velocity_ = msg->velocity;
+  vehicle_accel_ = msg->acceleration.linear.x;
+  RCLCPP_INFO(this->get_logger(), "velocity: '%f'", vehicle_velocity_);
+  RCLCPP_INFO(this->get_logger(), "vehicle_accel: '%f'", vehicle_accel_);
 }
 
 void CarlaVehicleNode::set_vehicle_command() {
@@ -47,7 +55,7 @@ void CarlaVehicleNode::set_vehicle_command() {
   control_cmd.gear = 1;
   control_cmd.reverse = false;
   control_cmd.manual_gear_shift = false;
-  vehicle_control_publisher_->publish(control_cmd);
+  ego_vehicle_control_cmd_publisher_->publish(control_cmd);
   RCLCPP_INFO(this->get_logger(), "Publishing%d: '%f'", (count_++),
               control_cmd.throttle);
 }
@@ -55,7 +63,7 @@ void CarlaVehicleNode::set_vehicle_command() {
 }  // namespace vehicle
 static const rclcpp::Logger LOGGER = rclcpp::get_logger("carla vehicle");
 int main(int argc, char* argv[]) {
-  RCLCPP_INFO(LOGGER, "Initializa Node~");
+  RCLCPP_INFO(LOGGER, "initializa vehicle node");
   rclcpp::init(argc, argv);
   rclcpp::spin(std::make_shared<vehicle::CarlaVehicleNode>());
   rclcpp::shutdown();

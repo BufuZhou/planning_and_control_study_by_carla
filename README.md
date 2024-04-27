@@ -48,6 +48,9 @@ https://docs.ros.org/en/foxy/Tutorials/Beginner-CLI-Tools/Introducing-Turtlesim/
 cd ~/CARLA_0.9.13/
 ./CarlaUE4.sh
 
+or
+sh ~/CARLA_0.9.13/CarlaUE4.sh
+
 ## carla-ros-bridge
 cd ~/carla-ros-bridge/
 source ./install/setup.bash
@@ -58,8 +61,14 @@ ros2 launch carla_ros_bridge carla_ros_bridge_with_example_ego_vehicle.launch.py
 
 ### spawn_point
 ~/carla-ros-bridge/src/ros-bridge/carla_spawn_objects/src/carla_spawn_objects/carla_spawn_objects.py
-function check_spawn_point_param add
+check_spawn_point_param
 spawn_point:="49.91,-7.778184,0.28,0,0,0"
+spawn_point:="-6.446170,-79.055023,0.275307,0,0,92.004189"
+spawn_point定义为：
+"x,y,z,roll,pitch,yaw"
+carla example中生成spawn point为：
+Transform(Location(x=-6.446170, y=-79.055023, z=0.275307), Rotation(pitch=0.000000, yaw=92.004189, roll=0.000000))
+Yaw的位置不一样，需要进行调整
 
 ### ego_vehicle
 ~/lifanjie/carla-ros-bridge/src/ros-bridge/carla_spawn_objects/config/objects.json

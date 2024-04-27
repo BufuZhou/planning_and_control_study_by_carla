@@ -16,12 +16,10 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 # find dependencies
+# ros相关的依赖，通过ament_target_dependencies配置
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
-# uncomment the following section in order to fill in
-# further dependencies manually.
-# find_package(<dependency> REQUIRED)
 
 # protobuf
 find_package(Protobuf REQUIRED)
@@ -79,48 +77,46 @@ foreach(PROTO_FILE ${ALL_PROTO_FILES})
       VERBATIM
    )
 endforeach()
-set_source_files_properties(${PROTO_GENERATE_SRC} ${PROTO_GENERATE_HDRS} PROPERTIES GENERATED TRUE)
-# 配合自定义命令生成proto对应的代码
-add_custom_target(generate_message ALL
+# 配合自定命令add_custom_command生成proto对应的代码
+add_custom_target(${PROJECT_NAME}_generate_proto ALL
                 DEPENDS ${PROTO_GENERATE_SRC} ${PROTO_GENERATE_HDRS}
                 COMMENT "generate message target"
                 VERBATIM
                 )
 
-add_executable(control src/control_main.cpp ${PROTO_OUTPUT_PATH})
-target_include_directories(control
+# add_executable(${PROJECT_NAME} src/control_main.cpp ${PROTO_OUTPUT_PATH})
+# 设定本模块的可执行程序
+add_executable(${PROJECT_NAME})
+# 添加ros相关的依赖，和前面find_package相对应
+ament_target_dependencies(${PROJECT_NAME} rclcpp std_msgs)
+
+# 添加编译可执行程序或者库所需的头文件路径
+target_include_directories(${PROJECT_NAME}
   PRIVATE
+  # protobuf库相关的头文件
   $<BUILD_INTERFACE:${Protobuf_INCLUDE_DIRS}>
+  # 当前模块所需proto生成代码的文件
   $<BUILD_INTERFACE:${PROTO_OUTPUT_PATH}>
 )
-target_sources(control 
+
+# 添加编译可执行程序或者库所需的源文件路径
+target_sources(${PROJECT_NAME} 
             PRIVATE
             src/control_main.cpp 
             ${PROTO_GENERATE_SRC}
             )
-target_link_libraries(control
+# 添加编译可执行程序或者库所需的链接库
+target_link_libraries(${PROJECT_NAME}
             ${Protobuf_LIBRARIES}
         )
 
-
-
-
-
-ament_target_dependencies(control rclcpp std_msgs)
-
-install(TARGETS
-  ${PROJECT_NAME}
+# 安装可执行文件到install文件中
+install(TARGETS   ${PROJECT_NAME}
   DESTINATION lib/${PROJECT_NAME}
 )
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
-  # the following line skips the linter which checks for copyrights
-  # uncomment the line when a copyright and license is not present in all source files
-  #set(ament_cmake_copyright_FOUND TRUE)
-  # the following line skips cpplint (only works in a git repo)
-  # uncomment the line when this package is not in a git repo
-  #set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 endif()
 

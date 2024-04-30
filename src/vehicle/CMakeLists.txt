@@ -22,8 +22,9 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(carla_msgs REQUIRED)
+find_package(common_msgs REQUIRED)
 add_executable(${PROJECT_NAME}_node src/vehicle_main.cpp)
-ament_target_dependencies(${PROJECT_NAME}_node rclcpp std_msgs carla_msgs)
+ament_target_dependencies(${PROJECT_NAME}_node rclcpp std_msgs carla_msgs common_msgs)
 target_include_directories( ${PROJECT_NAME}_node PUBLIC
                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
                             $<INSTALL_INTERFACE:include>)

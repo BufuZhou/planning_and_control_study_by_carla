@@ -30,12 +30,18 @@ CarlaVehicleNode::CarlaVehicleNode() : Node("Control") , count_(0) {
           "/carla/ego_vehicle/vehicle_status", 10,
           std::bind(&CarlaVehicleNode::get_vehicle_state, this, _1));
 
+  // get control command
+  control_command_subscriber_ =
+    this->create_subscription<common_msgs::msg::ControlCommand>(
+        "/control/control_command", 10,
+        std::bind(&CarlaVehicleNode::get_control_command, this, _1));
+
   // set command to carla vehicle
   ego_vehicle_control_cmd_publisher_ =
       this->create_publisher<carla_msgs::msg::CarlaEgoVehicleControl>(
           "/carla/ego_vehicle/vehicle_control_cmd", 10);
   timer_ = this->create_wall_timer(
-      500ms, std::bind(&CarlaVehicleNode::set_vehicle_command, this));
+      500ms, std::bind(&CarlaVehicleNode::send_vehicle_command, this));
 }
 
 void CarlaVehicleNode::get_vehicle_state(
@@ -47,18 +53,26 @@ void CarlaVehicleNode::get_vehicle_state(
   RCLCPP_INFO(this->get_logger(), "vehicle_accel: '%f'", vehicle_accel_);
 }
 
-void CarlaVehicleNode::set_vehicle_command() {
-  control_cmd.header.stamp = this->now();
-  // control_cmd.header.frame_id
-  control_cmd.steer = 0.0;
-  control_cmd.throttle = 1;
-  control_cmd.gear = 1;
-  control_cmd.reverse = false;
-  control_cmd.manual_gear_shift = false;
-  ego_vehicle_control_cmd_publisher_->publish(control_cmd);
-  RCLCPP_INFO(this->get_logger(), "Publishing%d: '%f'", (count_++),
-              control_cmd.throttle);
+void CarlaVehicleNode::get_control_command(
+  common_msgs::msg::ControlCommand::SharedPtr msg) {
+  control_command_.acceleration = msg->acceleration;
+  control_command_.steering = msg->steering;
 }
+
+void CarlaVehicleNode::send_vehicle_command() {
+  carla_vehicle_command_.header.stamp = this->now();
+  // control_cmd_.header.frame_id
+  carla_vehicle_command_.steer = control_command_.steering;
+  carla_vehicle_command_.throttle = control_command_.acceleration;
+  carla_vehicle_command_.gear = 1;
+  carla_vehicle_command_.reverse = false;
+  carla_vehicle_command_.manual_gear_shift = false;
+  ego_vehicle_control_cmd_publisher_->publish(carla_vehicle_command_);
+  RCLCPP_INFO(this->get_logger(), "Publishing %d: '%f'", (count_++),
+              carla_vehicle_command_.throttle);
+}
+
+
 
 }  // namespace vehicle
 static const rclcpp::Logger LOGGER = rclcpp::get_logger("carla vehicle");

@@ -22,20 +22,21 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(common_msgs REQUIRED)
 
-add_executable(${PROJECT_NAME}
+add_executable(${PROJECT_NAME}_node
 src/control_main.cpp
 src/control_node.cpp
+src/lat_controller.cpp
 )
 # 添加ros相关的依赖，和前面find_package相对应
-ament_target_dependencies(${PROJECT_NAME} rclcpp std_msgs common_msgs)
+ament_target_dependencies(${PROJECT_NAME}_node rclcpp std_msgs common_msgs)
 
-target_include_directories( ${PROJECT_NAME} PUBLIC
+target_include_directories( ${PROJECT_NAME}_node PUBLIC
                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
                             $<INSTALL_INTERFACE:include>)
 
 # 安装可执行文件到install文件中
-install(TARGETS   ${PROJECT_NAME}
-  DESTINATION lib/${PROJECT_NAME}
+install(TARGETS   ${PROJECT_NAME}_node
+  DESTINATION lib/${PROJECT_NAME}_node
 )
 
 ament_package()

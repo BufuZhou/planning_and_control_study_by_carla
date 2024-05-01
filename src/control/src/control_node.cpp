@@ -2,6 +2,7 @@
 #include "control/control_node.hpp"
 #include "rclcpp/logging.hpp"
 #include <chrono>
+#include "control/lat_controller.hpp"
 
 using namespace std::chrono_literals;
 
@@ -16,10 +17,12 @@ ControlNode::ControlNode() : Node("control") , count_(0) {
 }
 
 void ControlNode::send_control_command() {
+  LatController temp;
   control_cmd_.acceleration = 0.5;
+  control_cmd_.steering = temp.get_target_steering_angle();
   ego_vehicle_control_cmd_publisher_->publish(control_cmd_);
-  RCLCPP_INFO(this->get_logger(), "Publishing %d: '%f'", (count_++),
-              control_cmd_.acceleration);
+  RCLCPP_INFO(this->get_logger(), "Publishing %d: %f %f", (count_++),
+              control_cmd_.acceleration, control_cmd_.steering);
 }
 
 }  // namespace control

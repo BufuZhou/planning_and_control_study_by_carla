@@ -21,6 +21,15 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(common_msgs REQUIRED)
+find_package(eigen3_cmake_module REQUIRED)
+find_package(Eigen3 REQUIRED)
+set(EIGEN3_INCLUDE_DIR "/usr/include/eigen3")
+include_directories(${EIGEN3_INCLUDE_DIR})
+message(${EIGEN3_INCLUDE_DIR})
+if (NOT Eigen3)
+  message("Eigen3 not found")
+endif()
+
 
 add_executable(${PROJECT_NAME}_node
 src/control_main.cpp
@@ -28,15 +37,19 @@ src/control_node.cpp
 src/lat_controller.cpp
 )
 # 添加ros相关的依赖，和前面find_package相对应
-ament_target_dependencies(${PROJECT_NAME}_node rclcpp std_msgs common_msgs)
+ament_target_dependencies(${PROJECT_NAME}_node rclcpp std_msgs common_msgs Eigen3)
+ament_export_dependencies(eigen3_cmake_module)
+ament_export_dependencies(Eigen3)
 
 target_include_directories( ${PROJECT_NAME}_node PUBLIC
                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-                            $<INSTALL_INTERFACE:include>)
+                            $<INSTALL_INTERFACE:include>
+                            )
 
 # 安装可执行文件到install文件中
 install(TARGETS   ${PROJECT_NAME}_node
-  DESTINATION lib/${PROJECT_NAME}_node
+  # intall文件中的目录install/control/lib/control
+  DESTINATION lib/${PROJECT_NAME}
 )
 
 ament_package()

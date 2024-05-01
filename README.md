@@ -30,6 +30,17 @@ sudo apt-get install protobuf-compiler
 sudo apt-get install libprotobuf-dev
 protoc --version
 
+## eigen
+sudo apt install libeigen3-dev
+
+查看版本
+pkg-config --modversion eigen3
+
+教程：
+https://eigen.tuxfamily.org/index.php?title=Main_Page
+
+https://github.com/ros2/eigen3_cmake_module
+
 # code style (C++ google)
 sudo apt install clang-format
 sudo pip3 install cpplint

@@ -52,7 +52,8 @@
     "memory_resource": "cpp",
     "random": "cpp",
     "string": "cpp",
-    "bit": "cpp"
+    "bit": "cpp",
+    "dense": "cpp"
   },
   "python.autoComplete.extraPaths": [
     "/home/lifanjie/planning_and_control_study_by_carla/install/turtlesim/lib/python3.8/site-packages",

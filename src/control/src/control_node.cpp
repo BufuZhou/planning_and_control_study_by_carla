@@ -8,6 +8,12 @@ using namespace std::chrono_literals;
 
 namespace control {
 ControlNode::ControlNode() : Node("control") , count_(0) {
+  // get parameter
+  double mass_fl = 400.0;
+  this->declare_parameter<double>("mass_fl", 0.1);
+  this->get_parameter("mass_fl", mass_fl);
+  RCLCPP_INFO(this->get_logger(), "My parameter value is: %lf", mass_fl);
+  RCLCPP_INFO(this->get_logger(), "My parameter value is: %lf", mass_fl);
   // set command to vehicle node
   ego_vehicle_control_cmd_publisher_ =
       this->create_publisher<common_msgs::msg::ControlCommand>(

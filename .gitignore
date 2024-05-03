@@ -1,6 +1,7 @@
 *.o
 *.a
 *.log
+*.pyc
 build
 devel
 log

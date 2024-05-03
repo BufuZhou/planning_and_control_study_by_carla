@@ -62,6 +62,9 @@ cd ~/CARLA_0.9.13/
 or
 sh ~/CARLA_0.9.13/CarlaUE4.sh
 
+## ros2
+colcon build --packages-select vehicle control
+
 ## carla-ros-bridge
 cd ~/carla-ros-bridge/
 source ./install/setup.bash

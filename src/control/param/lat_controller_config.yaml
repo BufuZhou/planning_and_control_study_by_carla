@@ -1,0 +1,18 @@
+/**:                      # or /control/sim:
+  ros__parameters:        # parameters
+    ts: 0.01              # control_period, seconds
+    # vehicle parameters
+    mass_fl: 600.0        # left front wheel mass, kg
+    mass_fr: 600.0        # right front wheel mass, kg
+    mass_rl: 600.0        # left rear wheel mass, kg
+    mass_rr: 600.0        # right rear wheel mass, kg
+    wheelbase: 2.85       # distance between the front axle and the rear axle
+    cf: 155494.663        # front wheel steering stiffness, N/rad
+    cr: 155494.663        # rear wheel steering stiffness, N/rad
+    # lqr  
+    eps: 0.01             # iteration maximum error
+    max_iteration: 150    # maximum number of iterations
+    matrix_q: 0.05        # distance error weight
+    matrix_q: 0.0         # distance rate error weight
+    matrix_q: 1.0         # heading error weight
+    matrix_q: 0.0         # heading rate error weight

@@ -23,6 +23,7 @@ find_package(std_msgs REQUIRED)
 find_package(common_msgs REQUIRED)
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
+
 set(EIGEN3_INCLUDE_DIR "/usr/include/eigen3")
 include_directories(${EIGEN3_INCLUDE_DIR})
 message(${EIGEN3_INCLUDE_DIR})
@@ -44,7 +45,16 @@ ament_export_dependencies(Eigen3)
 target_include_directories( ${PROJECT_NAME}_node PUBLIC
                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
                             $<INSTALL_INTERFACE:include>
-                            )
+)
+
+# 读取yaml配置参数
+install(DIRECTORY launch
+        DESTINATION share/${PROJECT_NAME}/
+)
+install(DIRECTORY param
+        DESTINATION share/${PROJECT_NAME}/
+)
+                          
 
 # 安装可执行文件到install文件中
 install(TARGETS   ${PROJECT_NAME}_node

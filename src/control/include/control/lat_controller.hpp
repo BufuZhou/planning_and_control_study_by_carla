@@ -10,13 +10,21 @@ class LatController {
  public:
   LatController();
   double get_target_steering_angle();
+  // get the dynamic bicycle model parameters
+  void loadControlConfig();
+  void computeControlCommand();
 
  private:
   const std::string name_;
   common_msgs::msg::ControlCommand control_cmd_;
-  // get the dynamic bicycle model parameters
-  void loadControlConfig();
   void updateStateSpaceModel();
+  // solve discrete-time linear quadratic problem
+  void solveLqrProblem(const Eigen::MatrixXd &A, const Eigen::MatrixXd &B,
+                       const Eigen::MatrixXd &Q, const Eigen::MatrixXd &R,
+                       const double tolerance, const uint max_num_iteration,
+                       Eigen::MatrixXd *ptr_K);
+  // compute feedforward steering angle
+  void computeFeedforward();
   double ts_ = 0.0;         // control time interval, seconds
   // vehicle state
   double velocity_;         // vehicle velocity
@@ -41,6 +49,13 @@ class LatController {
   Eigen::MatrixXd matrix_q_;   // state weighting matrix
   Eigen::MatrixXd matrix_a_coeff;  // vehicle state matrix coefficients
   Eigen::MatrixXd matrix_state_;   // 4 by 1 matrix; state matrix
+
+  // feedback steering angle
+  double steer_angle_feedback_;
+  // feedforward steering angle
+  double steering_angle_feedforward_;
+  // steering angle command
+  double steering_angle_command_;
 };
 }  // namespace control
 

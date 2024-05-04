@@ -55,7 +55,83 @@ void LatController::updateStateSpaceModel() {
   matrix_ad_ = (matrix_i + 0.5 * ts_ * matrix_a_) *
                (matrix_i - 0.5 * ts_ * matrix_a_).inverse();
   matrix_bd_ = matrix_b_ * ts_;
+
+  // update state matrix
+  matrix_state_ = Eigen::MatrixXd::Zero(4, 1);
+  matrix_state_(0, 0) = 0.1;
+  matrix_state_(1, 0) = 0.1;
+  matrix_state_(2, 0) = 0.1;
+  matrix_state_(3, 0) = 0.1;
 }
+
+void LatController::solveLqrProblem(
+    const Eigen::MatrixXd &A, const Eigen::MatrixXd &B,
+    const Eigen::MatrixXd &Q, const Eigen::MatrixXd &R, const double tolerance,
+    const uint max_num_iteration, Eigen::MatrixXd *ptr_K) {
+  if (A.rows() != A.cols() ||
+      B.rows() != A.rows() ||
+      Q.rows() != Q.cols() ||
+      Q.rows() != A.rows() ||
+      R.rows() != R.cols() ||
+      R.rows() != B.cols()) {
+    std::cout << "One or more matrices have incompatible dimensions.";
+    return;
+  }
+
+  Eigen::MatrixXd AT = A.transpose();
+  Eigen::MatrixXd BT = B.transpose();
+  // Solves a discrete-time Algebraic Riccati equation (DARE)
+  // Calculate Matrix Difference Riccati Equation, initialize P and Q
+  Eigen::MatrixXd P = Q;
+  uint num_iteration = 0;
+  double diff = 0.0;
+  while (num_iteration++ < max_num_iteration) {
+    Eigen::MatrixXd P_next = AT * P * A -
+        AT * P * B * (R + BT * P * B).inverse() * BT * P * A +
+        Q;
+    // check the difference between P and P_next
+    diff = fabs((P_next - P).maxCoeff());
+    P = P_next;
+
+    if (diff < tolerance) {
+      break;
+    }
+  }
+
+  if (num_iteration >= max_num_iteration) {
+    std::cout << "lqr_not_convergence, last_diff_is:" << diff;
+  } else {
+    std::cout << "Number of iterations until convergence: " << num_iteration
+              << ", max difference: " << diff;
+  }
+  *ptr_K = (R + BT * P * B).inverse() * BT * P * A;
+}
+
+void LatController::computeControlCommand() {
+  updateStateSpaceModel();
+  solveLqrProblem(matrix_ad_, matrix_bd_, matrix_q_, matrix_r_,
+                  lqr_eps_, lqr_max_iteration_, &matrix_k_);
+  // feedback = - K * state
+  steer_angle_feedback_ = -(matrix_k_ * matrix_state_)(0, 0);
+  computeFeedforward();
+  steering_angle_command_ = steer_angle_feedback_ + steering_angle_feedforward_;
+}
+
+void LatController::computeFeedforward() {
+  // cf_ is the sum of lateral stiffness of two front wheels
+  // cr_ is the sum of lateral stiffness of two rear wheels
+  double kv =
+      lr_ * mass_ / cf_ / wheelbase_ - lf_ * mass_ / cr_ / wheelbase_;
+
+  double ref_curvature = 0.002;
+  // then change it from rad to %
+  steering_angle_feedforward_ =
+      wheelbase_ * ref_curvature + kv * velocity_ * velocity_ * ref_curvature -
+      matrix_k_(0, 2) *
+          (lr_ * ref_curvature - lf_ * mass_ * velocity_ * velocity_ *
+                                     ref_curvature / cr_ / wheelbase_);
+}
+
 double LatController::get_target_steering_angle() {
   return control_cmd_.steering;
 }

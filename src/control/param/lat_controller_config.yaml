@@ -1,6 +1,8 @@
 /**:                      # or /control/sim:
   ros__parameters:        # parameters
     ts: 0.01              # control_period, seconds
+    # 
+    target_speed : 5.0
     # vehicle parameters
     mass_fl: 600.0        # left front wheel mass, kg
     mass_fr: 600.0        # right front wheel mass, kg

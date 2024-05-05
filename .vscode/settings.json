@@ -62,5 +62,6 @@
   "python.analysis.extraPaths": [
     "/home/lifanjie/planning_and_control_study_by_carla/install/turtlesim/lib/python3.8/site-packages",
     "/opt/ros/foxy/lib/python3.8/site-packages"
-  ]
+  ],
+  "C_Cpp.errorSquiggles": "disabled"
 }

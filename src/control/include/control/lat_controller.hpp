@@ -4,6 +4,8 @@
 #include <Eigen/Dense>
 #include <string>
 #include "common_msgs/msg/control_command.hpp"
+#include "common_msgs/msg/trajectory.hpp"
+#include "common_msgs/msg/trajectory_point.hpp"
 
 namespace control {
 class LatController {
@@ -56,6 +58,10 @@ class LatController {
   double steering_angle_feedforward_;
   // steering angle command
   double steering_angle_command_;
+
+  //
+  common_msgs::msg::Trajectory trajectory_;
+  common_msgs::msg::TrajectoryPoint trajectory_point_;
 };
 }  // namespace control
 

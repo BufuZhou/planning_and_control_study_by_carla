@@ -1,10 +1,13 @@
 // Copyright 2016 Open Source Robotics Foundation, Inc.
+#include <iostream>
+#include <chrono>
 #include "control/control_node.hpp"
 #include "rclcpp/logging.hpp"
-#include <chrono>
 #include "control/lat_controller.hpp"
 
+
 using namespace std::chrono_literals;
+using std::placeholders::_1;
 
 namespace control {
 ControlNode::ControlNode() : Node("control") , count_(0) {
@@ -14,12 +17,24 @@ ControlNode::ControlNode() : Node("control") , count_(0) {
   this->get_parameter("mass_fl", mass_fl);
   RCLCPP_INFO(this->get_logger(), "My parameter value is: %lf", mass_fl);
   RCLCPP_INFO(this->get_logger(), "My parameter value is: %lf", mass_fl);
+
+  // get trajectory message
+  trajectory_subscriber_ =
+    this->create_subscription<common_msgs::msg::Trajectory>(
+        "/planning/trajectory", 10,
+        std::bind(&ControlNode::get_trajectory, this, _1));
+
   // set command to vehicle node
   ego_vehicle_control_cmd_publisher_ =
       this->create_publisher<common_msgs::msg::ControlCommand>(
           "/control/control_command", 10);
   timer_ = this->create_wall_timer(
       500ms, std::bind(&ControlNode::send_control_command, this));
+}
+
+void ControlNode::get_trajectory(common_msgs::msg::Trajectory::SharedPtr msg) {
+  trajectory_.trajectory = msg->trajectory;
+  std::cout << trajectory_.trajectory[0].x << std::endl;
 }
 
 void ControlNode::send_control_command() {

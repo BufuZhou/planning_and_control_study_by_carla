@@ -1,0 +1,13 @@
+float64 timestamp
+float64 x
+float64 y
+float64 z
+float64 yaw
+float64 pitch
+float64 roll
+float64 vel_x
+float64 vel_y
+float64 vel_z
+float64 acc_x
+float64 acc_y
+float64 acc_z

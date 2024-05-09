@@ -53,7 +53,8 @@
     "random": "cpp",
     "string": "cpp",
     "bit": "cpp",
-    "dense": "cpp"
+    "dense": "cpp",
+    "unordered_set": "cpp"
   },
   "python.autoComplete.extraPaths": [
     "/home/lifanjie/planning_and_control_study_by_carla/install/turtlesim/lib/python3.8/site-packages",

@@ -14,25 +14,17 @@ using std::placeholders::_1;
 
 namespace localization {
 LocalizationNode::LocalizationNode() : Node("localization") , count_(0) {
-  // // get parameter
-  // double mass_fl = 400.0;
-  // this->declare_parameter<double>("mass_fl", 0.1);
-  // this->get_parameter("mass_fl", mass_fl);
-  // RCLCPP_INFO(this->get_logger(), "My parameter value is: %lf", mass_fl);
-  // RCLCPP_INFO(this->get_logger(), "My parameter value is: %lf", mass_fl);
-
-  // // get trajectory message
-  pose_subscriber_ =
+  odometry_subscriber_ =
     this->create_subscription<nav_msgs::msg::Odometry>(
         "/carla/ego_vehicle/odometry", 10,
         std::bind(&LocalizationNode::get_location_message, this, _1));
 
-  // // set command to vehicle node
-  // ego_vehicle_control_cmd_publisher_ =
-  //     this->create_publisher<common_msgs::msg::ControlCommand>(
-  //         "/control/control_command", 10);
-  // timer_ = this->create_wall_timer(
-  //     500ms, std::bind(&ControlNode::send_control_command, this));
+  // send pose message
+  pose_publisher_ =
+      this->create_publisher<common_msgs::msg::Pose>(
+          "/localization/pose", 10);
+  timer_ = this->create_wall_timer(
+      500ms, std::bind(&LocalizationNode::publish_pose_message, this));
 }
 
 void LocalizationNode::get_location_message(
@@ -59,13 +51,10 @@ void LocalizationNode::get_location_message(
             << "pose.vel_z = " << pose_.vel_z << " " << std::endl;
 }
 
-// void ControlNode::send_control_command() {
-//   LatController temp;
-//   control_cmd_.acceleration = 0.5;
-//   control_cmd_.steering = temp.get_target_steering_angle();
-//   ego_vehicle_control_cmd_publisher_->publish(control_cmd_);
-//   RCLCPP_INFO(this->get_logger(), "Publishing %d: %f %f", (count_++),
-//               control_cmd_.acceleration, control_cmd_.steering);
-// }
+void LocalizationNode::publish_pose_message() {
+  pose_publisher_->publish(pose_);
+  RCLCPP_INFO(this->get_logger(), "Publishing %d: %f %f", (count_++),
+              pose_.x, pose_.y);
+}
 
 }  // namespace localization

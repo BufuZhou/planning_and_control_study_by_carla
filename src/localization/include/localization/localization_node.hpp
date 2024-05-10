@@ -28,15 +28,15 @@ namespace localization {
 class LocalizationNode : public rclcpp::Node {
  public:
   LocalizationNode();
-  // void send_control_command();
   void get_location_message(nav_msgs::msg::Odometry::SharedPtr msg);
+  void publish_pose_message();
  private:
   size_t count_;
   rclcpp::TimerBase::SharedPtr timer_;
-  // rclcpp::Publisher<common_msgs::msg::ControlCommand>::SharedPtr
-  //   ego_vehicle_control_cmd_publisher_;
+  rclcpp::Publisher<common_msgs::msg::Pose>::SharedPtr
+    pose_publisher_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr
-    pose_subscriber_;
+    odometry_subscriber_;
   common_msgs::msg::Pose pose_;
 };
 }  // namespace localization

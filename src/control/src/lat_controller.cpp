@@ -1,10 +1,12 @@
 // copyright
-#include "control/lat_controller.hpp"
-#include "rclcpp/logging.hpp"
 #include <iostream>
+#include "math.h"
+#include "rclcpp/logging.hpp"
+#include "common_msgs/msg/pose.hpp"
+#include "control/lat_controller.hpp"
 
 namespace control {
-LatController::LatController(): name_("LQR-based Lateral Controller") {
+LatController::LatController() : name_("LQR-based Lateral Controller") {
   std::cout << "lateral controller: " << name_ << std::endl;
 }
 
@@ -33,6 +35,28 @@ void LatController::loadControlConfig() {
                0.0,  0.0, 1.0, 0.0,
                0.0,  0.0, 0.0, 0.0;
   matrix_r_ = Eigen::MatrixXd::Identity(1, 1);
+}
+
+void LatController::computeLateralErrors(const double x, const double y,
+                                         const double theta,
+                                         const double linear_v,
+                                         const double angular_v,
+                                         const double linear_a) {
+  QueryNearestPointByPosition(x, y);
+  double dx = target_trajectory_point_.x - x;
+  double dy = target_trajectory_point_.y - y;
+  std::cout << "reference heading: " << target_trajectory_point_.theta
+            << std::endl;
+  std::cout << "ego vehicle heading: " << theta << std::endl;
+
+  double cos_ego_heading = std::cos(target_trajectory_point_.theta);
+  double sin_ego_heading = std::sin(target_trajectory_point_.theta);
+  lateral_error_ = dy * cos_ego_heading - dx * sin_ego_heading;
+  heading_error_ = target_trajectory_point_.theta - std::atan2(dy, dx);
+
+  // todo: how to calculate lateral_error_dot and heading_error_dot
+  // lateral_error_dot_ = linear_v * std::sin(heading_error_);
+  // heading_error_dot_ = angular_v - target_trajectory_point_.kappa;
 }
 
 void LatController::updateStateSpaceModel() {
@@ -107,7 +131,10 @@ void LatController::solveLqrProblem(
   *ptr_K = (R + BT * P * B).inverse() * BT * P * A;
 }
 
-void LatController::computeControlCommand() {
+void LatController::computeControlCommand(
+    const common_msgs::msg::Pose localization,
+    const common_msgs::msg::Trajectory planning_trajectory) {
+  trajectory_ = planning_trajectory;
   updateStateSpaceModel();
   solveLqrProblem(matrix_ad_, matrix_bd_, matrix_q_, matrix_r_,
                   lqr_eps_, lqr_max_iteration_, &matrix_k_);
@@ -130,6 +157,28 @@ void LatController::computeFeedforward() {
       matrix_k_(0, 2) *
           (lr_ * ref_curvature - lf_ * mass_ * velocity_ * velocity_ *
                                      ref_curvature / cr_ / wheelbase_);
+}
+
+void LatController::QueryNearestPointByPosition(const double x,
+                                                const double y) {
+  auto func_distance_square = [](const common_msgs::msg::TrajectoryPoint &point,
+                                 const double x, const double y) {
+    double dx = point.x - x;
+    double dy = point.y - y;
+    return dx * dx + dy * dy;
+  };
+
+  double d_min = func_distance_square(trajectory_.trajectory.front(), x, y);
+  size_t index_min = 0;
+
+  for (size_t i = 1; i < trajectory_.trajectory.size(); ++i) {
+    double d_temp = func_distance_square(trajectory_.trajectory[i], x, y);
+    if (d_temp < d_min) {
+      d_min = d_temp;
+      index_min = i;
+    }
+  }
+  target_trajectory_point_ = trajectory_.trajectory[index_min];
 }
 
 double LatController::get_target_steering_angle() {

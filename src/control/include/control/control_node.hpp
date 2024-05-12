@@ -6,6 +6,7 @@
 #include "common_msgs/msg/control_command.hpp"
 #include "memory"
 #include "common_msgs/msg/trajectory.hpp"
+#include "common_msgs/msg/pose.hpp"
 
 namespace control {
 class ControlNode : public rclcpp::Node {
@@ -13,6 +14,7 @@ class ControlNode : public rclcpp::Node {
   ControlNode();
   void send_control_command();
   void get_trajectory(common_msgs::msg::Trajectory::SharedPtr msg);
+  void get_localization(common_msgs::msg::Pose::SharedPtr msg);
  private:
   size_t count_;
   rclcpp::TimerBase::SharedPtr timer_;
@@ -22,6 +24,7 @@ class ControlNode : public rclcpp::Node {
     trajectory_subscriber_;
   common_msgs::msg::ControlCommand control_cmd_;
   common_msgs::msg::Trajectory trajectory_;
+  common_msgs::msg::Pose pose_;
 };
 }  // namespace control
 #endif  // SRC_CONTROL_INCLUDE_CONTROL_CONTROL_NODE_HPP_

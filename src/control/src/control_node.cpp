@@ -24,6 +24,7 @@ ControlNode::ControlNode() : Node("control") , count_(0) {
         "/planning/trajectory", 10,
         std::bind(&ControlNode::get_trajectory, this, _1));
 
+
   // set command to vehicle node
   ego_vehicle_control_cmd_publisher_ =
       this->create_publisher<common_msgs::msg::ControlCommand>(
@@ -35,6 +36,14 @@ ControlNode::ControlNode() : Node("control") , count_(0) {
 void ControlNode::get_trajectory(common_msgs::msg::Trajectory::SharedPtr msg) {
   trajectory_.trajectory = msg->trajectory;
   std::cout << trajectory_.trajectory[0].x << std::endl;
+}
+
+void ControlNode::get_localization(common_msgs::msg::Pose::SharedPtr msg) {
+  pose_.x = msg->x;
+  pose_.y = msg->y;
+  pose_.vel_x = msg->vel_x;
+  std::cout << "pose_.x = " << pose_.x << " " << "pose_.y = " << pose_.y << " "
+            << "pose_.z = " << pose_.z << " " << std::endl;
 }
 
 void ControlNode::send_control_command() {

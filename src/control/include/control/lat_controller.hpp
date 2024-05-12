@@ -14,8 +14,13 @@ class LatController {
   double get_target_steering_angle();
   // get the dynamic bicycle model parameters
   void loadControlConfig();
-  void computeControlCommand();
-
+  void computeControlCommand(
+      const common_msgs::msg::Pose localization,
+      const common_msgs::msg::Trajectory planning_trajectory);
+  void QueryNearestPointByPosition(const double x, const double y);
+  void computeLateralErrors(const double x, const double y, const double theta,
+                            const double linear_v, const double angular_v,
+                            const double linear_a);
  private:
   const std::string name_;
   common_msgs::msg::ControlCommand control_cmd_;
@@ -51,6 +56,11 @@ class LatController {
   Eigen::MatrixXd matrix_q_;   // state weighting matrix
   Eigen::MatrixXd matrix_a_coeff;  // vehicle state matrix coefficients
   Eigen::MatrixXd matrix_state_;   // 4 by 1 matrix; state matrix
+  // control state
+  double lateral_error_;
+  double lateral_error_dot_;
+  double heading_error_;
+  double heading_error_dot_;
 
   // feedback steering angle
   double steer_angle_feedback_;
@@ -59,9 +69,10 @@ class LatController {
   // steering angle command
   double steering_angle_command_;
 
-  //
+  // planning trajectory
   common_msgs::msg::Trajectory trajectory_;
-  common_msgs::msg::TrajectoryPoint trajectory_point_;
+  // the trajectory point closest to the actual position of the vehicle
+  common_msgs::msg::TrajectoryPoint target_trajectory_point_;
 };
 }  // namespace control
 

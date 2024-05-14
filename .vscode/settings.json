@@ -57,7 +57,8 @@
     "unordered_set": "cpp",
     "hash_map": "cpp",
     "hash_set": "cpp",
-    "bitset": "cpp"
+    "bitset": "cpp",
+    "future": "cpp"
   },
   "python.autoComplete.extraPaths": [
     "/home/lifanjie/planning_and_control_study_by_carla/install/turtlesim/lib/python3.8/site-packages",

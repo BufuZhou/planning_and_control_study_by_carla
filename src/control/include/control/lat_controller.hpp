@@ -11,30 +11,35 @@ namespace control {
 class LatController {
  public:
   LatController();
-  double get_target_steering_angle();
-  // get the dynamic bicycle model parameters
-  void loadControlConfig();
+  double get_steering_angle_command();
+
   void computeControlCommand(
       const common_msgs::msg::Pose localization,
       const common_msgs::msg::Trajectory planning_trajectory);
-  void QueryNearestPointByPosition(const double x, const double y);
-  void computeLateralErrors(const double x, const double y, const double theta,
-                            const double linear_v, const double angular_v,
-                            const double linear_a);
+
  private:
+  // lateral controller name
   const std::string name_;
-  common_msgs::msg::ControlCommand control_cmd_;
-  void updateStateSpaceModel();
+  // get the dynamic bicycle model parameters
+  void loadControlConfig();
+  // get target trajectory point
+  common_msgs::msg::TrajectoryPoint QueryNearestPointByPosition(
+      const double x, const double y,
+      common_msgs::msg::Trajectory trajectory);
+  // compute leteral control error
+  void computeLateralErrors(
+      const double x, const double y, const double theta,
+      common_msgs::msg::Trajectory trajectory);
+  // lqr state space model based by vehicle dynamics
+  void updateStateSpaceModel(double velocity);
   // solve discrete-time linear quadratic problem
   void solveLqrProblem(const Eigen::MatrixXd &A, const Eigen::MatrixXd &B,
                        const Eigen::MatrixXd &Q, const Eigen::MatrixXd &R,
                        const double tolerance, const uint max_num_iteration,
                        Eigen::MatrixXd *ptr_K);
   // compute feedforward steering angle
-  void computeFeedforward();
+  void computeFeedforward(double vx);
   double ts_ = 0.0;         // control time interval, seconds
-  // vehicle state
-  double velocity_;         // vehicle velocity
   // the following parameters are vehicle physics related
   double mass_ = 0.0;       // the mass of vehicle, kg
   double wheelbase_ = 0.0;  // distance between front axle and rear axle, m
@@ -42,7 +47,6 @@ class LatController {
   double lr_;               // distance from rear wheel center to C.G.
   double cf_ = 0.0;         // front wheel steering stiffness, N/rad
   double cr_ = 0.0;         // rear wheel steering stiffness, N/rad
-
   double iz_ = 0.0;         // moment of inertia around the z-axis, kg*m^2
   // parameters for lqr solver
   double lqr_eps_;             // iteration maximum error
@@ -68,11 +72,6 @@ class LatController {
   double steering_angle_feedforward_;
   // steering angle command
   double steering_angle_command_;
-
-  // planning trajectory
-  common_msgs::msg::Trajectory trajectory_;
-  // the trajectory point closest to the actual position of the vehicle
-  common_msgs::msg::TrajectoryPoint target_trajectory_point_;
 };
 }  // namespace control
 

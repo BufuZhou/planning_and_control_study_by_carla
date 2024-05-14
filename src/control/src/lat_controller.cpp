@@ -1,5 +1,6 @@
 // copyright
 #include <iostream>
+#include <algorithm>
 #include "math.h"
 #include "rclcpp/logging.hpp"
 #include "common_msgs/msg/pose.hpp"
@@ -37,38 +38,42 @@ void LatController::loadControlConfig() {
   matrix_r_ = Eigen::MatrixXd::Identity(1, 1);
 }
 
-void LatController::computeLateralErrors(const double x, const double y,
-                                         const double theta,
-                                         const double linear_v,
-                                         const double angular_v,
-                                         const double linear_a) {
-  QueryNearestPointByPosition(x, y);
-  double dx = target_trajectory_point_.x - x;
-  double dy = target_trajectory_point_.y - y;
-  std::cout << "reference heading: " << target_trajectory_point_.theta
+void LatController::computeLateralErrors(
+    const double x, const double y, const double theta,
+    common_msgs::msg::Trajectory trajectory) {
+  // the trajectory point closest to the actual position of the vehicle
+  common_msgs::msg::TrajectoryPoint target_point;
+
+  target_point = QueryNearestPointByPosition(x, y, trajectory);
+  double dx = target_point.x - x;
+  double dy = target_point.y - y;
+  std::cout << "reference heading: " << target_point.theta
             << std::endl;
   std::cout << "ego vehicle heading: " << theta << std::endl;
 
-  double cos_ego_heading = std::cos(target_trajectory_point_.theta);
-  double sin_ego_heading = std::sin(target_trajectory_point_.theta);
+  double cos_ego_heading = std::cos(target_point.theta);
+  double sin_ego_heading = std::sin(target_point.theta);
   lateral_error_ = dy * cos_ego_heading - dx * sin_ego_heading;
-  heading_error_ = target_trajectory_point_.theta - std::atan2(dy, dx);
+  heading_error_ = target_point.theta - std::atan2(dy, dx);
 
   // todo: how to calculate lateral_error_dot and heading_error_dot
   // lateral_error_dot_ = linear_v * std::sin(heading_error_);
   // heading_error_dot_ = angular_v - target_trajectory_point_.kappa;
+  lateral_error_dot_ = 0.0;
+  heading_error_ = 0.0;
 }
 
-void LatController::updateStateSpaceModel() {
+void LatController::updateStateSpaceModel(double vx) {
+  vx = std::min(std::abs(vx), 0.01);
   matrix_a_ = Eigen::MatrixXd::Zero(4, 4);
   matrix_a_(0, 1) = 1.0;
-  matrix_a_(1, 1) = -(cf_ + cr_) / mass_ / velocity_;
+  matrix_a_(1, 1) = -(cf_ + cr_) / mass_ / vx;
   matrix_a_(1, 2) = (cf_ + cr_) / mass_;
-  matrix_a_(1, 3) = (lr_ * cr_ - lf_ * cf_) / mass_ / velocity_;
+  matrix_a_(1, 3) = (lr_ * cr_ - lf_ * cf_) / mass_ / vx;
   matrix_a_(2, 3) = 1.0;
-  matrix_a_(3, 1) = (lr_ * cr_ - lf_ * cf_) / iz_ / velocity_;
+  matrix_a_(3, 1) = (lr_ * cr_ - lf_ * cf_) / iz_ / vx;
   matrix_a_(3, 2) = (lf_ * cf_ - lr_ * cr_) / iz_;
-  matrix_a_(3, 3) = -(lf_ * lf_ * cf_ + lr_ * lr_ * cr_) / iz_ /velocity_;
+  matrix_a_(3, 3) = -(lf_ * lf_ * cf_ + lr_ * lr_ * cr_) / iz_ /vx;
 
   matrix_b_ = Eigen::MatrixXd::Zero(4, 1);
   matrix_b_(1, 0) = cf_ / mass_;
@@ -134,17 +139,27 @@ void LatController::solveLqrProblem(
 void LatController::computeControlCommand(
     const common_msgs::msg::Pose localization,
     const common_msgs::msg::Trajectory planning_trajectory) {
-  trajectory_ = planning_trajectory;
-  updateStateSpaceModel();
+  // the trajectory point closest to the actual position of the vehicle
+  common_msgs::msg::TrajectoryPoint target_point;
+  loadControlConfig();
+  computeLateralErrors(localization.x, localization.y, localization.yaw,
+                       planning_trajectory);
+
+  // Calculate the speed of the vehicle along the vehicle's x-axis
+  double vx = localization.vel_y * std::cos(localization.yaw) +
+              localization.vel_x * std::sin(localization.yaw);
+  updateStateSpaceModel(vx);
   solveLqrProblem(matrix_ad_, matrix_bd_, matrix_q_, matrix_r_,
                   lqr_eps_, lqr_max_iteration_, &matrix_k_);
   // feedback = - K * state
   steer_angle_feedback_ = -(matrix_k_ * matrix_state_)(0, 0);
-  computeFeedforward();
+  computeFeedforward(vx);
   steering_angle_command_ = steer_angle_feedback_ + steering_angle_feedforward_;
+  std::cout << "steering angle command: " << steering_angle_command_
+            << std::endl;
 }
 
-void LatController::computeFeedforward() {
+void LatController::computeFeedforward(double vx) {
   // cf_ is the sum of lateral stiffness of two front wheels
   // cr_ is the sum of lateral stiffness of two rear wheels
   double kv =
@@ -153,14 +168,16 @@ void LatController::computeFeedforward() {
   double ref_curvature = 0.002;
   // then change it from rad to %
   steering_angle_feedforward_ =
-      wheelbase_ * ref_curvature + kv * velocity_ * velocity_ * ref_curvature -
+      wheelbase_ * ref_curvature + kv * vx * vx * ref_curvature -
       matrix_k_(0, 2) *
-          (lr_ * ref_curvature - lf_ * mass_ * velocity_ * velocity_ *
+          (lr_ * ref_curvature - lf_ * mass_ * vx * vx *
                                      ref_curvature / cr_ / wheelbase_);
 }
 
-void LatController::QueryNearestPointByPosition(const double x,
-                                                const double y) {
+common_msgs::msg::TrajectoryPoint LatController::QueryNearestPointByPosition(
+    const double x, const double y,
+    common_msgs::msg::Trajectory planning_trajectory) {
+  auto trajectory = planning_trajectory.trajectory;
   auto func_distance_square = [](const common_msgs::msg::TrajectoryPoint &point,
                                  const double x, const double y) {
     double dx = point.x - x;
@@ -168,21 +185,22 @@ void LatController::QueryNearestPointByPosition(const double x,
     return dx * dx + dy * dy;
   };
 
-  double d_min = func_distance_square(trajectory_.trajectory.front(), x, y);
+  double d_min =
+      func_distance_square(trajectory.front(), x, y);
   size_t index_min = 0;
 
-  for (size_t i = 1; i < trajectory_.trajectory.size(); ++i) {
-    double d_temp = func_distance_square(trajectory_.trajectory[i], x, y);
+  for (size_t i = 1; i < trajectory.size(); ++i) {
+    double d_temp = func_distance_square(trajectory[i], x, y);
     if (d_temp < d_min) {
       d_min = d_temp;
       index_min = i;
     }
   }
-  target_trajectory_point_ = trajectory_.trajectory[index_min];
+  return trajectory[index_min];
 }
 
-double LatController::get_target_steering_angle() {
-  return control_cmd_.steering;
+double LatController::get_steering_angle_command() {
+  return steering_angle_command_;
 }
 
 }  // namespace control

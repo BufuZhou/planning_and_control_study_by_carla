@@ -12,7 +12,7 @@ using std::placeholders::_1;
 namespace control {
 ControlNode::ControlNode() : Node("control") , count_(0) {
   //
-  control_command_.acceleration = 0.5;
+  control_command_.acceleration = 0.4;
   // get parameter
   double mass_fl = 400.0;
   this->declare_parameter<double>("mass_fl", 0.1);
@@ -28,7 +28,7 @@ ControlNode::ControlNode() : Node("control") , count_(0) {
 
   // get pose from localizaion
   localization_subscriber_ =
-      this->create_subscription<common_msgs::msg::Trajectory>(
+      this->create_subscription<common_msgs::msg::Pose>(
           "/localization/pose", 10,
           std::bind(&ControlNode::get_localization, this, _1));
 
@@ -37,7 +37,7 @@ ControlNode::ControlNode() : Node("control") , count_(0) {
       this->create_publisher<carla_msgs::msg::CarlaEgoVehicleControl>(
           "/carla/ego_vehicle/vehicle_control_cmd", 10);
   timer_ = this->create_wall_timer(
-      500ms, std::bind(&ControlNode::send_vehicle_command, this));
+      100ms, std::bind(&ControlNode::send_vehicle_command, this));
 
   // set command to vehicle node
   // ego_vehicle_control_cmd_publisher_ =
@@ -48,8 +48,10 @@ ControlNode::ControlNode() : Node("control") , count_(0) {
 }
 
 void ControlNode::get_trajectory(common_msgs::msg::Trajectory::SharedPtr msg) {
+  std::cout << "get trajectory....." << std::endl;
   trajectory_.trajectory = msg->trajectory;
-  std::cout << trajectory_.trajectory[0].x << std::endl;
+  std::cout << "x = " << trajectory_.trajectory[0].x << std::endl;
+  std::cout << "y = " << trajectory_.trajectory[0].y << std::endl;
 }
 
 void ControlNode::get_localization(common_msgs::msg::Pose::SharedPtr msg) {
@@ -63,9 +65,12 @@ void ControlNode::get_localization(common_msgs::msg::Pose::SharedPtr msg) {
 }
 
 void ControlNode::send_vehicle_command() {
+  std::cout << "send vehicle command to carla" << std::endl;
+  std::cout << trajectory_.trajectory[0].x << std::endl;
   // calculate steering angle by lateral controller
-  // lateral_controller_.computeControlCommand(pose_, trajectory_);
-  // control_command_.steering = lateral_controller_.get_steering_angle_command();
+  LatController lateral_controller;
+  lateral_controller.computeControlCommand(pose_, trajectory_);
+  // control_command_.steering = lateral_controller.get_steering_angle_command();
 
   carla_vehicle_command_.header.stamp = this->now();
   // control_cmd_.header.frame_id
@@ -75,8 +80,8 @@ void ControlNode::send_vehicle_command() {
   carla_vehicle_command_.reverse = false;
   carla_vehicle_command_.manual_gear_shift = false;
   carla_vehicle_control_cmd_publisher_->publish(carla_vehicle_command_);
-  RCLCPP_INFO(this->get_logger(), "Publishing %d: '%f'", (count_++),
-              carla_vehicle_command_.throttle);
+  RCLCPP_INFO(this->get_logger(), "Publishing %d: %f, %f", (count_++),
+              carla_vehicle_command_.throttle, carla_vehicle_command_.steer);
 }
 
 void ControlNode::send_control_command() {

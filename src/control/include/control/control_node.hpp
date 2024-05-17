@@ -29,10 +29,10 @@ class ControlNode : public rclcpp::Node {
     localization_subscriber_;
   rclcpp::Publisher<carla_msgs::msg::CarlaEgoVehicleControl>::SharedPtr
       carla_vehicle_control_cmd_publisher_;
+
   common_msgs::msg::ControlCommand control_command_;
   common_msgs::msg::Trajectory trajectory_;
   common_msgs::msg::Pose pose_;
-  LatController lateral_controller_;
   carla_msgs::msg::CarlaEgoVehicleControl carla_vehicle_command_;
 };
 }  // namespace control

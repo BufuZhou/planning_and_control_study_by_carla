@@ -21,7 +21,7 @@ PlanningNode::PlanningNode() : Node("planning") , count_(0) {
   trajectory_publisher_ = this->create_publisher<common_msgs::msg::Trajectory>(
           "/planning/trajectory", 10);
   timer_ = this->create_wall_timer(
-           500ms, std::bind(&PlanningNode::loadRoadMap, this));
+           50ms, std::bind(&PlanningNode::loadRoadMap, this));
 }
 
 bool PlanningNode::loadRoadMap() {

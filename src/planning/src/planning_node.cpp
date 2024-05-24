@@ -15,7 +15,7 @@ PlanningNode::PlanningNode() : Node("planning") , count_(0) {
   // std::cout << "plannint init" << std::endl;
   roadmap_path_ =
       "/home/lifanjie/planning_and_control_study_by_carla/src/planning/data/"
-      "reference_line_town03.txt";
+      "reference_line_town03_01.txt";
   target_velocity_ = 5.0;
   // loadRoadMap();
   trajectory_publisher_ = this->create_publisher<common_msgs::msg::Trajectory>(

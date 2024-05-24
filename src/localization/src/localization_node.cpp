@@ -24,7 +24,7 @@ LocalizationNode::LocalizationNode() : Node("localization") , count_(0) {
       this->create_publisher<common_msgs::msg::Pose>(
           "/localization/pose", 10);
   timer_ = this->create_wall_timer(
-      50ms, std::bind(&LocalizationNode::publish_pose_message, this));
+      100ms, std::bind(&LocalizationNode::publish_pose_message, this));
 }
 
 void LocalizationNode::get_location_message(

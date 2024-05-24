@@ -14,6 +14,7 @@ LatController::LatController() : name_("LQR-based Lateral Controller") {
 void LatController::loadControlConfig() {
   std::cout << "load lateral controller config..." << std::endl;
   // vehicle parameters
+  ts_ = 0.1;
   wheelbase_ =  2.85;
   cf_ = 155494.663;
   cr_ = 155494.663;
@@ -40,9 +41,41 @@ void LatController::loadControlConfig() {
   std::cout << "load lateral controller finished..." << std::endl;
 }
 
+common_msgs::msg::TrajectoryPoint LatController::QueryNearestPointByPosition(
+    const double x, const double y,
+    const common_msgs::msg::Trajectory *planning_trajectory) {
+  std::cout << "start to query target point" << std::endl;
+  std::cout << planning_trajectory->trajectory[0].x << std::endl;
+  auto trajectory = planning_trajectory->trajectory;
+
+  auto func_distance_square = [](const common_msgs::msg::TrajectoryPoint &point,
+                                 const double x, const double y) {
+    double dx = point.x - x;
+    double dy = point.y - y;
+    return dx * dx + dy * dy;
+  };
+
+  double d_min =
+      func_distance_square(trajectory.front(), x, y);
+  size_t index_min = 0;
+
+  for (size_t i = 1; i < trajectory.size(); ++i) {
+    double d_temp = func_distance_square(trajectory[i], x, y);
+    if (d_temp < d_min) {
+      d_min = d_temp;
+      index_min = i;
+    }
+  }
+  std::cout << "nearest point........." << std::endl;
+  std::cout << index_min << std::endl;
+  std::cout << trajectory[index_min].x << std::endl;
+  std::cout << trajectory[index_min].y << std::endl;
+  return trajectory[index_min];
+}
+
 void LatController::computeLateralErrors(
     const double x, const double y, const double theta,
-    common_msgs::msg::Trajectory trajectory) {
+    const common_msgs::msg::Trajectory *trajectory) {
   std::cout << "start to compute lateral error..." << std::endl;
   // the trajectory point closest to the actual position of the vehicle
   common_msgs::msg::TrajectoryPoint target_point;
@@ -57,7 +90,10 @@ void LatController::computeLateralErrors(
   double cos_ego_heading = std::cos(target_point.theta);
   double sin_ego_heading = std::sin(target_point.theta);
   lateral_error_ = dy * cos_ego_heading - dx * sin_ego_heading;
-  heading_error_ = target_point.theta - std::atan2(dy, dx);
+  heading_error_ = target_point.theta - theta;
+
+  std::cout << "lateral error" << lateral_error_ << std::endl;
+  std::cout << "heading error" << heading_error_ << std::endl;
 
   // todo: how to calculate lateral_error_dot and heading_error_dot
   // lateral_error_dot_ = linear_v * std::sin(heading_error_);
@@ -67,7 +103,7 @@ void LatController::computeLateralErrors(
 }
 
 void LatController::updateStateSpaceModel(double vx) {
-  vx = std::min(std::abs(vx), 0.01);
+  vx = std::max(std::abs(vx), 0.01);
   matrix_a_ = Eigen::MatrixXd::Zero(4, 4);
   matrix_a_(0, 1) = 1.0;
   matrix_a_(1, 1) = -(cf_ + cr_) / mass_ / vx;
@@ -90,9 +126,9 @@ void LatController::updateStateSpaceModel(double vx) {
 
   // update state matrix
   matrix_state_ = Eigen::MatrixXd::Zero(4, 1);
-  matrix_state_(0, 0) = 0.1;
+  matrix_state_(0, 0) = lateral_error_;
   matrix_state_(1, 0) = 0.1;
-  matrix_state_(2, 0) = 0.1;
+  matrix_state_(2, 0) = heading_error_;
   matrix_state_(3, 0) = 0.1;
 }
 
@@ -140,29 +176,29 @@ void LatController::solveLqrProblem(
 }
 
 void LatController::computeControlCommand(
-    const common_msgs::msg::Pose localization,
-    const common_msgs::msg::Trajectory planning_trajectory) {
+    const common_msgs::msg::Pose *localization,
+    const common_msgs::msg::Trajectory *planning_trajectory) {
   std::cout << "lateral controller start......" << std::endl;
   // the trajectory point closest to the actual position of the vehicle
   common_msgs::msg::TrajectoryPoint target_point;
   loadControlConfig();
 
-  std::cout << planning_trajectory.trajectory.front().x << std::endl;
-  computeLateralErrors(localization.x, localization.y, localization.yaw,
+  std::cout << planning_trajectory->trajectory.front().x << std::endl;
+  computeLateralErrors(localization->x, localization->y, localization->yaw,
                        planning_trajectory);
 
-  // // Calculate the speed of the vehicle along the vehicle's x-axis
-  // double vx = localization.vel_y * std::cos(localization.yaw) +
-  //             localization.vel_x * std::sin(localization.yaw);
-  // updateStateSpaceModel(vx);
-  // solveLqrProblem(matrix_ad_, matrix_bd_, matrix_q_, matrix_r_,
-  //                 lqr_eps_, lqr_max_iteration_, &matrix_k_);
-  // // feedback = - K * state
-  // steer_angle_feedback_ = -(matrix_k_ * matrix_state_)(0, 0);
-  // computeFeedforward(vx);
-  // steering_angle_command_ = steer_angle_feedback_ + steering_angle_feedforward_;
-  // std::cout << "steering angle command: " << steering_angle_command_
-  //           << std::endl;
+  // Calculate the speed of the vehicle along the vehicle's x-axis
+  double vx = localization->vel_y * std::cos(localization->yaw) +
+              localization->vel_x * std::sin(localization->yaw);
+  updateStateSpaceModel(vx);
+  solveLqrProblem(matrix_ad_, matrix_bd_, matrix_q_, matrix_r_,
+                  lqr_eps_, lqr_max_iteration_, &matrix_k_);
+  // feedback = - K * state
+  steer_angle_feedback_ = -(matrix_k_ * matrix_state_)(0, 0);
+  computeFeedforward(vx);
+  steering_angle_command_ = steer_angle_feedback_ + steering_angle_feedforward_;
+  std::cout << "steering angle command: " << steering_angle_command_
+            << std::endl;
 }
 
 void LatController::computeFeedforward(double vx) {
@@ -180,34 +216,7 @@ void LatController::computeFeedforward(double vx) {
                                      ref_curvature / cr_ / wheelbase_);
 }
 
-common_msgs::msg::TrajectoryPoint LatController::QueryNearestPointByPosition(
-    const double x, const double y,
-    common_msgs::msg::Trajectory planning_trajectory) {
-  std::cout << "start to query target point" << std::endl;
-  std::cout << planning_trajectory.trajectory[0].x << std::endl;
-  auto trajectory = planning_trajectory.trajectory;
-  
-  auto func_distance_square = [](const common_msgs::msg::TrajectoryPoint &point,
-                                 const double x, const double y) {
-    double dx = point.x - x;
-    double dy = point.y - y;
-    return dx * dx + dy * dy;
-  };
-  
-  double d_min =
-      func_distance_square(trajectory.front(), x, y);
-  size_t index_min = 0;
 
-  for (size_t i = 1; i < trajectory.size(); ++i) {
-    double d_temp = func_distance_square(trajectory[i], x, y);
-    if (d_temp < d_min) {
-      d_min = d_temp;
-      index_min = i;
-    }
-  }
-  std::cout << index_min << std::endl;
-  return trajectory[index_min];
-}
 
 double LatController::get_steering_angle_command() {
   return steering_angle_command_;

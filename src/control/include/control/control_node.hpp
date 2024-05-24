@@ -14,12 +14,15 @@ namespace control {
 class ControlNode : public rclcpp::Node {
  public:
   ControlNode();
-  void send_control_command();
-  void send_vehicle_command();
   void get_trajectory(common_msgs::msg::Trajectory::SharedPtr msg);
   void get_localization(common_msgs::msg::Pose::SharedPtr msg);
+  void compute_lateral_command();
+  void send_control_command();
+  void send_vehicle_command();
+
  private:
   size_t count_;
+  rclcpp::TimerBase::SharedPtr control_timer_;
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Publisher<common_msgs::msg::ControlCommand>::SharedPtr
     ego_vehicle_control_cmd_publisher_;
@@ -34,6 +37,8 @@ class ControlNode : public rclcpp::Node {
   common_msgs::msg::Trajectory trajectory_;
   common_msgs::msg::Pose pose_;
   carla_msgs::msg::CarlaEgoVehicleControl carla_vehicle_command_;
+  bool has_subscribed_trajectory_;
+  bool has_subscribed_pose_;
 };
 }  // namespace control
 #endif  // SRC_CONTROL_INCLUDE_CONTROL_CONTROL_NODE_HPP_

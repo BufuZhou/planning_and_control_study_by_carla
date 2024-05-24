@@ -12,7 +12,9 @@ using std::placeholders::_1;
 namespace control {
 ControlNode::ControlNode() : Node("control") , count_(0) {
   //
-  control_command_.acceleration = 0.4;
+  control_command_.acceleration = 0.50;
+  has_subscribed_trajectory_ = false;
+  has_subscribed_pose_ = false;
   // get parameter
   double mass_fl = 400.0;
   this->declare_parameter<double>("mass_fl", 0.1);
@@ -36,6 +38,12 @@ ControlNode::ControlNode() : Node("control") , count_(0) {
   carla_vehicle_control_cmd_publisher_ =
       this->create_publisher<carla_msgs::msg::CarlaEgoVehicleControl>(
           "/carla/ego_vehicle/vehicle_control_cmd", 10);
+
+  control_timer_ = this->create_wall_timer(100ms,
+                    std::bind(&ControlNode::compute_lateral_command, this));
+
+
+
   timer_ = this->create_wall_timer(
       100ms, std::bind(&ControlNode::send_vehicle_command, this));
 
@@ -48,6 +56,7 @@ ControlNode::ControlNode() : Node("control") , count_(0) {
 }
 
 void ControlNode::get_trajectory(common_msgs::msg::Trajectory::SharedPtr msg) {
+  has_subscribed_trajectory_ = true;
   std::cout << "get trajectory....." << std::endl;
   trajectory_.trajectory = msg->trajectory;
   std::cout << "x = " << trajectory_.trajectory[0].x << std::endl;
@@ -55,6 +64,8 @@ void ControlNode::get_trajectory(common_msgs::msg::Trajectory::SharedPtr msg) {
 }
 
 void ControlNode::get_localization(common_msgs::msg::Pose::SharedPtr msg) {
+  has_subscribed_pose_ = true;
+  std::cout << "get pose......." << std::endl;
   pose_.x = msg->x;
   pose_.y = msg->y;
   pose_.vel_x = msg->vel_x;
@@ -64,14 +75,27 @@ void ControlNode::get_localization(common_msgs::msg::Pose::SharedPtr msg) {
             << "pose_.z = " << pose_.z << " " << std::endl;
 }
 
-void ControlNode::send_vehicle_command() {
-  std::cout << "send vehicle command to carla" << std::endl;
-  std::cout << trajectory_.trajectory[0].x << std::endl;
+void ControlNode::compute_lateral_command() {
+  if (has_subscribed_pose_ == false) {
+    std::cout << "not get pose......" << std::endl;
+    return;
+  } else if (has_subscribed_trajectory_ == false) {
+    std::cout << "not get trajectory......" << std::endl;
+    return;
+  } else {
+    std::cout << "commpute lateral command........." << std::endl;
+  }
+
   // calculate steering angle by lateral controller
   LatController lateral_controller;
-  lateral_controller.computeControlCommand(pose_, trajectory_);
-  // control_command_.steering = lateral_controller.get_steering_angle_command();
+  lateral_controller.computeControlCommand(&pose_, &trajectory_);
+  double front_steering_angle = lateral_controller.get_steering_angle_command();
 
+  control_command_.steering = front_steering_angle * 180 / 3.14156 / 70;
+}
+
+void ControlNode::send_vehicle_command() {
+  std::cout << "send vehicle command to carla" << std::endl;
   carla_vehicle_command_.header.stamp = this->now();
   // control_cmd_.header.frame_id
   carla_vehicle_command_.steer = control_command_.steering;

@@ -8,15 +8,30 @@ def generate_launch_description():
     'param',
     'lat_controller_config.yaml'
     )
-    print(config)
-    return LaunchDescription([
-        Node(
+
+    localization_node = Node(
+            package='localization',
+            namespace='localization',
+            executable='localization_node',
+    )
+
+    planning_node = Node(
+            package='planning',
+            namespace='planning',
+            executable='planning_node',
+    )
+
+    control_node = Node(
             package='control',
             namespace='control',
             executable='control_node',
-            name='sim',
             parameters=[config]
-        )
+    )
+
+    return LaunchDescription([
+        localization_node,
+        planning_node,
+        control_node
     ])
 
 if __name__ == '__main__':

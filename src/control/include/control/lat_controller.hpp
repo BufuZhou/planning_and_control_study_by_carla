@@ -14,8 +14,8 @@ class LatController {
   double get_steering_angle_command();
 
   void computeControlCommand(
-      const common_msgs::msg::Pose localization,
-      const common_msgs::msg::Trajectory planning_trajectory);
+      const common_msgs::msg::Pose *localization,
+      const common_msgs::msg::Trajectory *planning_trajectory);
 
  private:
   // lateral controller name
@@ -25,11 +25,11 @@ class LatController {
   // get target trajectory point
   common_msgs::msg::TrajectoryPoint QueryNearestPointByPosition(
       const double x, const double y,
-      common_msgs::msg::Trajectory trajectory);
+      const common_msgs::msg::Trajectory *trajectory);
   // compute leteral control error
   void computeLateralErrors(
       const double x, const double y, const double theta,
-      common_msgs::msg::Trajectory trajectory);
+      const common_msgs::msg::Trajectory *trajectory);
   // lqr state space model based by vehicle dynamics
   void updateStateSpaceModel(double velocity);
   // solve discrete-time linear quadratic problem

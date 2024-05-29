@@ -55,14 +55,14 @@ from agents.navigation.global_route_planner import GlobalRoutePlanner
 
 client = carla.Client("localhost", 2000)
 client.set_timeout(10)
-world = client.load_world('Town04')
+world = client.load_world('Town03')
 amap = world.get_map()
 sampling_resolution = 2
 # dao = GlobalRoutePlannerDAO(amap, sampling_resolution)
 grp = GlobalRoutePlanner(amap, sampling_resolution)
 # grp.setup()
 spawn_points = world.get_map().get_spawn_points()
-file_handle_spawn_points =open('spawn_points_Town04.txt',mode='w+')
+file_handle_spawn_points =open('spawn_points_Town03_01.txt',mode='w+')
 # print(len(spawn_points))
 ii = 0
 for s in spawn_points:
@@ -71,16 +71,16 @@ for s in spawn_points:
 # print(str(spawn_points[0]))
 # file_handle_spawn_points.write(spawn_points)
 
-origin = carla.Location(spawn_points[0].location)
+origin = carla.Location(spawn_points[10].location)
 destination = carla.Location(spawn_points[80].location)
 print("\n=====================================spawn_points=================================")
-print(spawn_points[0])
+print(spawn_points[10])
 
 
 # there are other funcations can be used to generate a route in GlobalRoutePlanner.
 w1 = grp.trace_route(origin, destination) 
 i = 0
-file_handle=open('reference_line_Town04.txt',mode='w+')
+file_handle=open('reference_line_Town03_01.txt',mode='w+')
 for w in w1:
     if i % 10 == 0:
         world.debug.draw_string(w[0].transform.location, 'O', draw_shadow=False,

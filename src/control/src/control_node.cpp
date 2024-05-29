@@ -39,7 +39,7 @@ ControlNode::ControlNode() : Node("control") , count_(0) {
       this->create_publisher<carla_msgs::msg::CarlaEgoVehicleControl>(
           "/carla/ego_vehicle/vehicle_control_cmd", 10);
 
-  control_timer_ = this->create_wall_timer(100ms,
+  control_timer_ = this->create_wall_timer(20ms,
                     std::bind(&ControlNode::compute_lateral_command, this));
 
 

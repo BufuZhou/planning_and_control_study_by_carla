@@ -14,14 +14,14 @@ LatController::LatController() : name_("LQR-based Lateral Controller") {
 void LatController::loadControlConfig() {
   std::cout << "load lateral controller config..." << std::endl;
   // vehicle parameters
-  ts_ = 0.1;
+  ts_ = 0.02;
   wheelbase_ =  2.85;
-  cf_ = 155494.663;
-  cr_ = 155494.663;
-  double mass_fl = 600.0;
-  double mass_fr = 600.0;
-  double mass_rl = 600.0;
-  double mass_rr = 600.0;
+  cf_ = 166208;
+  cr_ = 166208;
+  double mass_fl = 424.0;
+  double mass_fr = 424.0;
+  double mass_rl = 424.0;
+  double mass_rr = 424.0;
   double mass_front = mass_fl + mass_fr;
   double mass_rear = mass_rl + mass_rr;
   mass_ = mass_front + mass_rear;
@@ -33,9 +33,9 @@ void LatController::loadControlConfig() {
   lqr_eps_ = 0.01;
   lqr_max_iteration_ = 150;
   matrix_q_ = Eigen::MatrixXd::Zero(4, 4);
-  matrix_q_ << 0.05, 0.0, 0.0, 0.0,
+  matrix_q_ << 0.01, 0.0, 0.0, 0.0,
                0.0,  0.0, 0.0, 0.0,
-               0.0,  0.0, 1.0, 0.0,
+               0.0,  0.0, 0.5, 0.0,
                0.0,  0.0, 0.0, 0.0;
   matrix_r_ = Eigen::MatrixXd::Identity(1, 1);
   std::cout << "load lateral controller finished..." << std::endl;

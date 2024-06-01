@@ -33,9 +33,9 @@ void LatController::loadControlConfig() {
   lqr_eps_ = 0.01;
   lqr_max_iteration_ = 150;
   matrix_q_ = Eigen::MatrixXd::Zero(4, 4);
-  matrix_q_ << 0.01, 0.0, 0.0, 0.0,
+  matrix_q_ << 1, 0.0, 0.0, 0.0,
                0.0,  0.0, 0.0, 0.0,
-               0.0,  0.0, 0.5, 0.0,
+               0.0,  0.0, 0.0, 0.0,
                0.0,  0.0, 0.0, 0.0;
   matrix_r_ = Eigen::MatrixXd::Identity(1, 1);
   std::cout << "load lateral controller finished..." << std::endl;
@@ -86,7 +86,7 @@ void LatController::computeLateralErrors(
   std::cout << "reference heading: " << target_point.theta
             << std::endl;
   std::cout << "ego vehicle heading: " << theta << std::endl;
-
+        
   double cos_ego_heading = std::cos(target_point.theta);
   double sin_ego_heading = std::sin(target_point.theta);
   lateral_error_ = dy * cos_ego_heading - dx * sin_ego_heading;

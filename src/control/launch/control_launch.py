@@ -13,19 +13,22 @@ def generate_launch_description():
             package='localization',
             namespace='localization',
             executable='localization_node',
+            output = 'both'
     )
 
     planning_node = Node(
             package='planning',
             namespace='planning',
             executable='planning_node',
+            output = 'both'
     )
 
     control_node = Node(
             package='control',
             namespace='control',
             executable='control_node',
-            parameters=[config]
+            parameters=[config],
+            output = 'both'
     )
 
     return LaunchDescription([

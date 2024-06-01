@@ -32,16 +32,16 @@ void LocalizationNode::get_location_message(
   pose_.x = msg->pose.pose.position.x;
   pose_.y = msg->pose.pose.position.y;
   pose_.z = msg->pose.pose.position.z;
-  std::cout << "pose.x = " << pose_.x << " "
-            << "pose.y = " << pose_.y << " "
-            << "pose.z = " << pose_.z << " " << std::endl;
+  // std::cout << "pose.x = " << pose_.x << " "
+  //           << "pose.y = " << pose_.y << " "
+  //           << "pose.z = " << pose_.z << " " << std::endl;
   // 将orientation(四元数)转换为欧拉角(roll, pitch, yaw)
   tf2::Quaternion quat_tf;
   tf2::convert(msg->pose.pose.orientation, quat_tf);
   tf2::Matrix3x3(quat_tf).getRPY(pose_.roll, pose_.pitch, pose_.yaw);
-  std::cout << "pose.roll = " << pose_.roll << " "
-            << "pose.pitch = " << pose_.pitch << " "
-            << "pose.yaw = " << pose_.yaw << " " << std::endl;
+  // std::cout << "pose.roll = " << pose_.roll << " "
+  //           << "pose.pitch = " << pose_.pitch << " "
+  //           << "pose.yaw = " << pose_.yaw << " " << std::endl;
   // 速度
   pose_.vel_x = msg->twist.twist.linear.x;
   pose_.vel_y = msg->twist.twist.linear.y;

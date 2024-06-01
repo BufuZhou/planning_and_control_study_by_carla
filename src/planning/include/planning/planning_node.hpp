@@ -6,6 +6,7 @@
 #include <utility>
 #include "rclcpp/rclcpp.hpp"
 #include "common_msgs/msg/trajectory.hpp"
+#include "planning/cubic_spline.hpp"
 
 
 namespace planning {
@@ -44,9 +45,13 @@ class PlanningNode : public rclcpp::Node {
       std::vector<double>* kappas, std::vector<double>* dkappas);
 
  private:
+  void getWayPoints();
   std::string roadmap_path_;
   double target_velocity_;
   std::vector<TrajectoryPoint> trajectory_points_;
+  Spline2D* trajectory_smooth_;
+  std::vector<float> way_point_x_;
+  std::vector<float> way_point_y_;
   size_t count_;
   common_msgs::msg::Trajectory trajectory_;
   rclcpp::TimerBase::SharedPtr timer_;

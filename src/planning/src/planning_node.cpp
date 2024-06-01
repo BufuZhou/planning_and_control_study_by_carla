@@ -18,6 +18,8 @@ PlanningNode::PlanningNode() : Node("planning") , count_(0) {
       "reference_line_town03_01.txt";
   target_velocity_ = 5.0;
   // loadRoadMap();
+  getWayPoints();
+  trajectory_smooth_ = new Spline2D(way_point_x_, way_point_y_);
   trajectory_publisher_ = this->create_publisher<common_msgs::msg::Trajectory>(
           "/planning/trajectory", 10);
   timer_ = this->create_wall_timer(
@@ -30,10 +32,10 @@ bool PlanningNode::loadRoadMap() {
   std::ifstream infile;
   infile.open(roadmap_path_);  // 将文件流对象与文件连接起来
   if (!infile.is_open()) {
-    std::cout << "open file failed." << std::endl;
+    // std::cout << "open file failed." << std::endl;
     return false;
   } else {
-    std::cout << "open file success." << std::endl;
+    // std::cout << "open file success." << std::endl;
   }
   std::vector<std::pair<double, double>> xy_points;
   std::string s, x, y;
@@ -43,7 +45,7 @@ bool PlanningNode::loadRoadMap() {
     word >> y;
     double pt_x = std::atof(x.c_str());
     double pt_y = std::atof(y.c_str());
-    std::cout << pt_x << " " << pt_y << std::endl;
+    // std::cout << pt_x << " " << pt_y << std::endl;
     xy_points.push_back(std::make_pair(pt_x, pt_y));
   }
   infile.close();
@@ -218,5 +220,12 @@ bool PlanningNode::computePathProfile(
   return true;
 }
 
+
+void PlanningNode::getWayPoints() {
+  for (unsigned int i = 0; i < trajectory_.trajectory.size(); i++) {
+    way_point_x_.push_back(trajectory_.trajectory[i].x);
+    way_point_x_.push_back(trajectory_.trajectory[i].y);
+  }
+}
 
 }  // namespace planning

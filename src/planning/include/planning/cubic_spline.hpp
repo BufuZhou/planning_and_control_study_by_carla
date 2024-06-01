@@ -9,44 +9,44 @@
 #include <string>
 #include <vector>
 // #include "common.h"
-#include "cpprobotics_types.h"
+// #include "cpprobotics_types.h"
 
 namespace planning {
 
-inline Vec_f vec_diff(Vec_f input) {
-  Vec_f output;
+inline std::vector<float> vec_diff(std::vector<float> input) {
+  std::vector<float> output;
   for (unsigned int i = 1; i < input.size(); i++) {
     output.push_back(input[i] - input[i - 1]);
   }
   return output;
-};
+}
 
 // 计算累加的s
-inline Vec_f cum_sum(Vec_f input) {
-  Vec_f output;
+inline std::vector<float> cum_sum(std::vector<float> input) {
+  std::vector<float> output;
   float temp = 0;
   for (unsigned int i = 0; i < input.size(); i++) {
     temp += input[i];
     output.push_back(temp);
   }
   return output;
-};
+}
 
 class Spline {
  public:
-  Vec_f x;
-  Vec_f y;
+  std::vector<float> x;
+  std::vector<float> y;
   int nx;
-  Vec_f h;
-  Vec_f a;
-  Vec_f b;
-  Vec_f c;
+  std::vector<float> h;
+  std::vector<float> a;
+  std::vector<float> b;
+  std::vector<float> c;
   // Eigen::VectorXf c;
-  Vec_f d;
+  std::vector<float> d;
 
-  Spline(){};
+  Spline() {}
   // d_i * (x-x_i)^3 + c_i * (x-x_i)^2 + b_i * (x-x_i) + a_i
-  Spline(Vec_f x_, Vec_f y_)
+  Spline(std::vector<float> x_, std::vector<float> y_)
       : x(x_), y(y_), nx(x_.size()), h(vec_diff(x_)), a(y_) {
     Eigen::MatrixXf A = calc_A();
     Eigen::VectorXf B = calc_B();
@@ -60,7 +60,7 @@ class Spline {
       b.push_back((a[i + 1] - a[i]) / h[i] -
                   h[i] * (c[i + 1] + 2 * c[i]) / 3.0);
     }
-  };
+  }
 
   float calc(float t) {
     if (t < x.front() || t > x.back()) {
@@ -71,7 +71,7 @@ class Spline {
     float dx = t - x[seg_id];
     return a[seg_id] + b[seg_id] * dx + c[seg_id] * dx * dx +
            d[seg_id] * dx * dx * dx;
-  };
+  }
 
   float calc_d(float t) {
     if (t < x.front() || t > x.back()) {
@@ -104,7 +104,7 @@ class Spline {
     }
     A(nx - 1, nx - 1) = 1.0;
     return A;
-  };
+  }
   Eigen::VectorXf calc_B() {
     Eigen::VectorXf B = Eigen::VectorXf::Zero(nx);
     for (int i = 0; i < nx - 2; i++) {
@@ -112,7 +112,7 @@ class Spline {
                  3.0 * (a[i + 1] - a[i]) / h[i];
     }
     return B;
-  };
+  }
 
   int bisect(float t, int start, int end) {
     int mid = (start + end) / 2;
@@ -131,20 +131,20 @@ class Spline2D {
  public:
   Spline sx;
   Spline sy;
-  Vec_f s;
+  std::vector<float> s;
 
-  Spline2D(Vec_f x, Vec_f y) {
+  Spline2D(std::vector<float> x, std::vector<float> y) {
     // 计算(x,y)对应的弧长s
     s = calc_s(x, y);
     sx = Spline(s, x);
     sy = Spline(s, y);
-  };
+  }
 
-  Poi_f calc_postion(float s_t) {
+  std::array<float, 2> calc_postion(float s_t) {
     float x = sx.calc(s_t);
     float y = sy.calc(s_t);
     return {{x, y}};
-  };
+  }
 
   float calc_curvature(float s_t) {
     float dx = sx.calc_d(s_t);
@@ -152,31 +152,31 @@ class Spline2D {
     float dy = sy.calc_d(s_t);
     float ddy = sy.calc_dd(s_t);
     return (ddy * dx - ddx * dy) / (dx * dx + dy * dy);
-  };
+  }
 
   float calc_yaw(float s_t) {
     float dx = sx.calc_d(s_t);
     float dy = sy.calc_d(s_t);
     return std::atan2(dy, dx);
-  };
+  }
 
  private:
-  Vec_f calc_s(Vec_f x, Vec_f y) {
-    Vec_f ds;
-    Vec_f out_s{0};
-    Vec_f dx = vec_diff(x);
-    Vec_f dy = vec_diff(y);
+  std::vector<float> calc_s(std::vector<float> x, std::vector<float> y) {
+    std::vector<float> ds;
+    std::vector<float> out_s{0};
+    std::vector<float> dx = vec_diff(x);
+    std::vector<float> dy = vec_diff(y);
 
     for (unsigned int i = 0; i < dx.size(); i++) {
       ds.push_back(std::sqrt(dx[i] * dx[i] + dy[i] * dy[i]));
     }
 
     // 计算累积的ds之和s
-    Vec_f cum_ds = cum_sum(ds);
+    std::vector<float> cum_ds = cum_sum(ds);
     // 为什么不直接return cum_ds
     out_s.insert(out_s.end(), cum_ds.begin(), cum_ds.end());
     return out_s;
-  };
+  }
 };
-}  // namespace shenlan
+}  // namespace planning
 #endif  // SRC_PLANNING_INCLUDE_PLANNING_CUBIC_SPLINE_HPP_

@@ -23,6 +23,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 "msg/TrajectoryPoint.msg"
 "msg/Trajectory.msg"
 "msg/Pose.msg"
+"msg/LateralControlDebug.msg"
 )
 
 

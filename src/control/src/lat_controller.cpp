@@ -1,14 +1,62 @@
 // copyright
 #include <iostream>
+#include <iomanip>
 #include <algorithm>
-#include "math.h"
+#include <cmath>
 #include "rclcpp/logging.hpp"
 #include "common_msgs/msg/pose.hpp"
 #include "control/lat_controller.hpp"
 
+namespace {
+std::string GetLogFileName() {
+  time_t raw_time;
+  char name_buffer[80];
+  std::time(&raw_time);
+  strftime(name_buffer, 80, "/tmp/steer_log_simple_optimal_%F_%H%M%S.csv",
+           localtime(&raw_time));
+  return std::string(name_buffer);
+}
+
+void WriteHeaders(std::ofstream &file_stream) {
+  file_stream << "current_lateral_error,"
+              << "current_ref_heading,"
+              << "current_heading,"
+              << "current_heading_error,"
+              << "heading_error_rate,"
+              << "lateral_error_rate,"
+              << "current_curvature,"
+              << "steer_angle,"
+              << "steer_angle_feedforward,"
+              << "steer_angle_lateral_contribution,"
+              << "steer_angle_lateral_rate_contribution,"
+              << "steer_angle_heading_contribution,"
+              << "steer_angle_heading_rate_contribution,"
+              << "steer_angle_feedback,"
+              << "steer_position"
+              << "v" << std::endl;
+}
+}  // namespace
+
 namespace control {
 LatController::LatController() : name_("LQR-based Lateral Controller") {
   std::cout << "lateral controller: " << name_ << std::endl;
+  flags_enable_csv_debug = true;
+  if (flags_enable_csv_debug) {
+    steer_log_file_.open(GetLogFileName());
+    steer_log_file_ << std::fixed;
+    steer_log_file_ << std::setprecision(6);
+    WriteHeaders(steer_log_file_);
+  }
+}
+
+LatController::~LatController() {
+  CloseLogFile();
+}
+
+void LatController::CloseLogFile() {
+  if (flags_enable_csv_debug && steer_log_file_.is_open()) {
+    steer_log_file_.close();
+  }
 }
 
 void LatController::loadControlConfig() {
@@ -35,17 +83,17 @@ void LatController::loadControlConfig() {
   matrix_q_ = Eigen::MatrixXd::Zero(4, 4);
   matrix_q_ << 1, 0.0, 0.0, 0.0,
                0.0,  0.0, 0.0, 0.0,
-               0.0,  0.0, 0.0, 0.0,
+               0.0,  0.0, 1, 0.0,
                0.0,  0.0, 0.0, 0.0;
   matrix_r_ = Eigen::MatrixXd::Identity(1, 1);
-  std::cout << "load lateral controller finished..." << std::endl;
+  // std::cout << "load lateral controller finished..." << std::endl;
 }
 
 common_msgs::msg::TrajectoryPoint LatController::QueryNearestPointByPosition(
     const double x, const double y,
     const common_msgs::msg::Trajectory *planning_trajectory) {
-  std::cout << "start to query target point" << std::endl;
-  std::cout << planning_trajectory->trajectory[0].x << std::endl;
+  // std::cout << "start to query target point" << std::endl;
+  // std::cout << planning_trajectory->trajectory[0].x << std::endl;
   auto trajectory = planning_trajectory->trajectory;
 
   auto func_distance_square = [](const common_msgs::msg::TrajectoryPoint &point,
@@ -66,27 +114,27 @@ common_msgs::msg::TrajectoryPoint LatController::QueryNearestPointByPosition(
       index_min = i;
     }
   }
-  std::cout << "nearest point........." << std::endl;
-  std::cout << index_min << std::endl;
-  std::cout << trajectory[index_min].x << std::endl;
-  std::cout << trajectory[index_min].y << std::endl;
+  // std::cout << "nearest point........." << std::endl;
+  // std::cout << index_min << std::endl;
+  // std::cout << trajectory[index_min].x << std::endl;
+  // std::cout << trajectory[index_min].y << std::endl;
   return trajectory[index_min];
 }
 
 void LatController::computeLateralErrors(
     const double x, const double y, const double theta,
     const common_msgs::msg::Trajectory *trajectory) {
-  std::cout << "start to compute lateral error..." << std::endl;
+  // std::cout << "start to compute lateral error..." << std::endl;
   // the trajectory point closest to the actual position of the vehicle
   common_msgs::msg::TrajectoryPoint target_point;
 
   target_point = QueryNearestPointByPosition(x, y, trajectory);
   double dx = target_point.x - x;
   double dy = target_point.y - y;
-  std::cout << "reference heading: " << target_point.theta
-            << std::endl;
-  std::cout << "ego vehicle heading: " << theta << std::endl;
-        
+  // std::cout << "reference heading: " << target_point.theta
+  //           << std::endl;
+  // std::cout << "ego vehicle heading: " << theta << std::endl;
+
   double cos_ego_heading = std::cos(target_point.theta);
   double sin_ego_heading = std::sin(target_point.theta);
   lateral_error_ = dy * cos_ego_heading - dx * sin_ego_heading;
@@ -215,8 +263,6 @@ void LatController::computeFeedforward(double vx) {
           (lr_ * ref_curvature - lf_ * mass_ * vx * vx *
                                      ref_curvature / cr_ / wheelbase_);
 }
-
-
 
 double LatController::get_steering_angle_command() {
   return steering_angle_command_;

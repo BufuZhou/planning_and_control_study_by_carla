@@ -1,8 +1,9 @@
 // copyright
 #ifndef SRC_CONTROL_INCLUDE_CONTROL_LAT_CONTROLLER_HPP_
 #define SRC_CONTROL_INCLUDE_CONTROL_LAT_CONTROLLER_HPP_
-#include <Eigen/Dense>
 #include <string>
+#include <fstream>
+#include <Eigen/Dense>
 #include "common_msgs/msg/control_command.hpp"
 #include "common_msgs/msg/trajectory.hpp"
 #include "common_msgs/msg/trajectory_point.hpp"
@@ -11,6 +12,7 @@ namespace control {
 class LatController {
  public:
   LatController();
+  ~LatController();
   double get_steering_angle_command();
 
   void computeControlCommand(
@@ -20,7 +22,11 @@ class LatController {
  private:
   // lateral controller name
   const std::string name_;
+  // for logging purpose
+  std::ofstream steer_log_file_;
   // get the dynamic bicycle model parameters
+  bool flags_enable_csv_debug;
+  void CloseLogFile();
   void loadControlConfig();
   // get target trajectory point
   common_msgs::msg::TrajectoryPoint QueryNearestPointByPosition(

@@ -46,9 +46,9 @@ void LocalizationNode::get_location_message(
   pose_.vel_x = msg->twist.twist.linear.x;
   pose_.vel_y = msg->twist.twist.linear.y;
   pose_.vel_z = msg->twist.twist.linear.z;
-  std::cout << "pose.vel_x = " << pose_.vel_x << " "
-            << "pose.vel_y = " << pose_.vel_y << " "
-            << "pose.vel_z = " << pose_.vel_z << " " << std::endl;
+  // std::cout << "pose.vel_x = " << pose_.vel_x << " "
+  //           << "pose.vel_y = " << pose_.vel_y << " "
+  //           << "pose.vel_z = " << pose_.vel_z << " " << std::endl;
 }
 
 void LocalizationNode::publish_pose_message() {

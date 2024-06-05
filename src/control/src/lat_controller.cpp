@@ -18,13 +18,15 @@ std::string GetLogFileName() {
 }
 
 void WriteHeaders(std::ofstream &file_stream) {
-  file_stream << "current_lateral_error,"
-              << "current_ref_heading,"
-              << "current_heading,"
-              << "current_heading_error,"
+  file_stream << "ref_lateral_distance,"
+              << "lateral_distance,"
+              << "lateral_error,"
+              << "ref_heading,"
+              << "heading,"
+              << "heading_error,"
               << "heading_error_rate,"
               << "lateral_error_rate,"
-              << "current_curvature,"
+              << "curvature,"
               << "steer_angle,"
               << "steer_angle_feedforward,"
               << "steer_angle_lateral_contribution,"
@@ -59,11 +61,11 @@ void LatController::CloseLogFile() {
   }
 }
 
-void LatController::loadControlConfig() {
+void LatController::LoadControlConfig() {
   std::cout << "load lateral controller config..." << std::endl;
   // vehicle parameters
   ts_ = 0.02;
-  wheelbase_ =  2.85;
+  wheelbase_ = 2.85;
   cf_ = 166208;
   cr_ = 166208;
   double mass_fl = 424.0;
@@ -76,7 +78,9 @@ void LatController::loadControlConfig() {
   lf_ = wheelbase_ * (1.0 - mass_front / mass_);
   lr_ = wheelbase_ * (1.0 - mass_rear / mass_);
   iz_ = lf_ * lf_ * mass_front + lr_ * lr_ * mass_rear;
-
+  max_front_wheel_steer_angle_ = 70.0 *  PI / 180.0;
+  max_lat_acc_ = 5.0;
+  min_speed_protection_ = 0.1;
   // lqr solver paramters
   lqr_eps_ = 0.01;
   lqr_max_iteration_ = 150;
@@ -89,9 +93,42 @@ void LatController::loadControlConfig() {
   // std::cout << "load lateral controller finished..." << std::endl;
 }
 
-common_msgs::msg::TrajectoryPoint LatController::QueryNearestPointByPosition(
-    const double x, const double y,
-    const common_msgs::msg::Trajectory *planning_trajectory) {
+void LatController::ProcessLogs(const LateralControlDebug *debug) {
+  using std::to_string;
+  const std::string log_str =
+    to_string(debug->ref_lateral_distance) + "," +
+    to_string(debug->lateral_distance) + "," +
+    to_string(debug->lateral_distance) + "," +
+    to_string(debug->lateral_distance_error) + ",";
+    to_string(debug->ref_heading) + "," +
+    to_string(debug->heading) + "," +
+    to_string(debug->heading_error) + ",";
+    to_string(debug->heading_error) + "," +
+    to_string(debug->heading_error_rate) + "," +
+    to_string(debug->curvature) + ",";
+    to_string(debug->steer_angle) + "," +
+    to_string(debug->steer_angle_feedforward) + "," +
+    to_string(debug->lateral_distance_contribution) + ",";
+    to_string(debug->lateral_distance_rate_contribution) + "," +
+    to_string(debug->heading_contribudtion) + "," +
+    to_string(debug->heading_rate_contribution) + "," +
+    to_string(debug->steer_angle_feedback) + "," +
+    to_string(debug->steer_angle) + "," +  // todo: steering_percentage
+    to_string(debug->steer_angle);  // todo: linear_velocity
+}
+
+void LatController::LogInitParameters() {
+  std::cout << name_ << " begin.";
+  std::cout << "[LatController parameters]"
+            << " mass_: " << mass_ << ","
+            << " iz_: " << iz_ << ","
+            << " lf_: " << lf_ << ","
+            << " lr_: " << lr_;
+}
+
+TrajectoryPoint LatController::QueryNearestPointByPosition(
+  const double x, const double y,
+  const common_msgs::msg::Trajectory *planning_trajectory) {
   // std::cout << "start to query target point" << std::endl;
   // std::cout << planning_trajectory->trajectory[0].x << std::endl;
   auto trajectory = planning_trajectory->trajectory;
@@ -229,7 +266,7 @@ void LatController::computeControlCommand(
   std::cout << "lateral controller start......" << std::endl;
   // the trajectory point closest to the actual position of the vehicle
   common_msgs::msg::TrajectoryPoint target_point;
-  loadControlConfig();
+  LoadControlConfig();
 
   std::cout << planning_trajectory->trajectory.front().x << std::endl;
   computeLateralErrors(localization->x, localization->y, localization->yaw,

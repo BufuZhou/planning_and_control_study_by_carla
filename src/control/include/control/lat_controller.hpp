@@ -1,12 +1,19 @@
 // copyright
 #ifndef SRC_CONTROL_INCLUDE_CONTROL_LAT_CONTROLLER_HPP_
 #define SRC_CONTROL_INCLUDE_CONTROL_LAT_CONTROLLER_HPP_
+#include <Eigen/Dense>
 #include <string>
 #include <fstream>
-#include <Eigen/Dense>
 #include "common_msgs/msg/control_command.hpp"
 #include "common_msgs/msg/trajectory.hpp"
 #include "common_msgs/msg/trajectory_point.hpp"
+#include "common_msgs/msg/lateral_control_debug.hpp"
+
+using common_msgs::msg::TrajectoryPoint;
+using common_msgs::msg::Pose;
+using common_msgs::msg::Trajectory;
+using common_msgs::msg::LateralControlDebug;
+#define PI 3.141592653589793
 
 namespace control {
 class LatController {
@@ -15,9 +22,8 @@ class LatController {
   ~LatController();
   double get_steering_angle_command();
 
-  void computeControlCommand(
-      const common_msgs::msg::Pose *localization,
-      const common_msgs::msg::Trajectory *planning_trajectory);
+  void computeControlCommand(const Pose *localization,
+                             const Trajectory *planning_trajectory);
 
  private:
   // lateral controller name
@@ -27,15 +33,17 @@ class LatController {
   // get the dynamic bicycle model parameters
   bool flags_enable_csv_debug;
   void CloseLogFile();
-  void loadControlConfig();
+  void LoadControlConfig();
+  void ProcessLogs(const LateralControlDebug *debug);
+  void LogInitParameters();
   // get target trajectory point
-  common_msgs::msg::TrajectoryPoint QueryNearestPointByPosition(
-      const double x, const double y,
-      const common_msgs::msg::Trajectory *trajectory);
+  TrajectoryPoint QueryNearestPointByPosition(
+    const double x, const double y,
+    const Trajectory *trajectory);
   // compute leteral control error
   void computeLateralErrors(
       const double x, const double y, const double theta,
-      const common_msgs::msg::Trajectory *trajectory);
+      const Trajectory *trajectory);
   // lqr state space model based by vehicle dynamics
   void updateStateSpaceModel(double velocity);
   // solve discrete-time linear quadratic problem
@@ -54,6 +62,9 @@ class LatController {
   double cf_ = 0.0;         // front wheel steering stiffness, N/rad
   double cr_ = 0.0;         // rear wheel steering stiffness, N/rad
   double iz_ = 0.0;         // moment of inertia around the z-axis, kg*m^2
+  double max_front_wheel_steer_angle_;  // max front wheel steer angle
+  double max_lat_acc_;
+  double min_speed_protection_;
   // parameters for lqr solver
   double lqr_eps_;             // iteration maximum error
   double lqr_max_iteration_;   // maximum number of iterations

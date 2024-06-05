@@ -70,5 +70,6 @@
     "/opt/ros/foxy/lib/python3.8/site-packages"
   ],
   "C_Cpp.errorSquiggles": "disabled",
-  "cpplint.cpplintPath": "/usr/local/bin/cpplint"
+  "cpplint.cpplintPath": "/usr/local/bin/cpplint",
+  "editor.tabSize": 2
 }

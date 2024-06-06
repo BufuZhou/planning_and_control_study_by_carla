@@ -90,6 +90,7 @@ void LatController::LoadControlConfig() {
                0.0,  0.0, 1, 0.0,
                0.0,  0.0, 0.0, 0.0;
   matrix_r_ = Eigen::MatrixXd::Identity(1, 1);
+  cutoff_freq_ = 10.0;
   // std::cout << "load lateral controller finished..." << std::endl;
 }
 
@@ -115,6 +116,11 @@ void LatController::ProcessLogs(const LateralControlDebug *debug) {
     to_string(debug->steer_angle_feedback) + "," +
     to_string(debug->steer_angle) + "," +  // todo: steering_percentage
     to_string(debug->steer_angle);  // todo: linear_velocity
+
+  if (flags_enable_csv_debug) {
+    steer_log_file_ << log_str << std::endl;
+  }
+  std::cout << "Lateral_Controller_Detail: " << log_str << std::endl;
 }
 
 void LatController::LogInitParameters() {
@@ -125,6 +131,21 @@ void LatController::LogInitParameters() {
             << " lf_: " << lf_ << ","
             << " lr_: " << lr_;
 }
+
+void LatController::InitializeFilters() {
+  // Low pass filter
+  std::vector<double> den(3, 0.0);
+  std::vector<double> num(3, 0.0);
+
+}
+
+
+
+
+
+
+
+
 
 TrajectoryPoint LatController::QueryNearestPointByPosition(
   const double x, const double y,

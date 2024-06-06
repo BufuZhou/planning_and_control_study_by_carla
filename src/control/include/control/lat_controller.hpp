@@ -36,6 +36,7 @@ class LatController {
   void LoadControlConfig();
   void ProcessLogs(const LateralControlDebug *debug);
   void LogInitParameters();
+  void InitializeFilters();
   // get target trajectory point
   TrajectoryPoint QueryNearestPointByPosition(
     const double x, const double y,
@@ -65,6 +66,7 @@ class LatController {
   double max_front_wheel_steer_angle_;  // max front wheel steer angle
   double max_lat_acc_;
   double min_speed_protection_;
+  double cutoff_freq_;
   // parameters for lqr solver
   double lqr_eps_;             // iteration maximum error
   double lqr_max_iteration_;   // maximum number of iterations

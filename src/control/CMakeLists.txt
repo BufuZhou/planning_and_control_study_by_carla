@@ -39,6 +39,7 @@ src/control_node.cpp
 src/lat_controller.cpp
 src/digital_filter_coefficients.cpp
 src/digital_filter.cpp
+src/mean_filter.cpp
 )
 # 添加ros相关的依赖，和前面find_package相对应
 ament_target_dependencies(${PROJECT_NAME}_node rclcpp std_msgs carla_msgs common_msgs Eigen3)

@@ -8,6 +8,7 @@
 #include "common_msgs/msg/trajectory.hpp"
 #include "common_msgs/msg/trajectory_point.hpp"
 #include "common_msgs/msg/lateral_control_debug.hpp"
+#include "control/digital_filter.hpp"
 
 using common_msgs::msg::TrajectoryPoint;
 using common_msgs::msg::Pose;
@@ -63,10 +64,7 @@ class LatController {
   double cf_ = 0.0;         // front wheel steering stiffness, N/rad
   double cr_ = 0.0;         // rear wheel steering stiffness, N/rad
   double iz_ = 0.0;         // moment of inertia around the z-axis, kg*m^2
-  double max_front_wheel_steer_angle_;  // max front wheel steer angle
-  double max_lat_acc_;
-  double min_speed_protection_;
-  double cutoff_freq_;
+
   // parameters for lqr solver
   double lqr_eps_;             // iteration maximum error
   double lqr_max_iteration_;   // maximum number of iterations
@@ -91,6 +89,12 @@ class LatController {
   double steering_angle_feedforward_;
   // steering angle command
   double steering_angle_command_;
+
+  double max_front_wheel_steer_angle_;  // max front wheel steer angle
+  double max_lat_acc_;
+  double min_speed_protection_;
+  double cutoff_freq_;
+  common::DigitalFilter digital_filter_;
 };
 }  // namespace control
 

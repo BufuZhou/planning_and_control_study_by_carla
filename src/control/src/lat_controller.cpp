@@ -6,6 +6,7 @@
 #include "rclcpp/logging.hpp"
 #include "common_msgs/msg/pose.hpp"
 #include "control/lat_controller.hpp"
+#include "control/digital_filter_coefficients.hpp"
 
 namespace {
 std::string GetLogFileName() {
@@ -136,7 +137,8 @@ void LatController::InitializeFilters() {
   // Low pass filter
   std::vector<double> den(3, 0.0);
   std::vector<double> num(3, 0.0);
-
+  common::LpfCoefficients(ts_, cutoff_freq_, &den, &num);
+  digital_filter_.set_coefficients(den, num);
 }
 
 

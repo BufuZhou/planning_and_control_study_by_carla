@@ -4,11 +4,14 @@
 #include <Eigen/Dense>
 #include <string>
 #include <fstream>
+#include <memory>
 #include "common_msgs/msg/control_command.hpp"
 #include "common_msgs/msg/trajectory.hpp"
 #include "common_msgs/msg/trajectory_point.hpp"
 #include "common_msgs/msg/lateral_control_debug.hpp"
 #include "control/digital_filter.hpp"
+#include "control/mean_filter.hpp"
+#include "control/interpolation_1d.hpp"
 
 using common_msgs::msg::TrajectoryPoint;
 using common_msgs::msg::Pose;
@@ -55,6 +58,9 @@ class LatController {
                        Eigen::MatrixXd *ptr_K);
   // compute feedforward steering angle
   void computeFeedforward(double vx);
+  bool Init();
+  void LoadLatGainScheduler();
+
   double ts_ = 0.0;         // control time interval, seconds
   // the following parameters are vehicle physics related
   double mass_ = 0.0;       // the mass of vehicle, kg
@@ -70,11 +76,16 @@ class LatController {
   double lqr_max_iteration_;   // maximum number of iterations
   Eigen::MatrixXd matrix_a_;   // vehicle state matrix
   Eigen::MatrixXd matrix_ad_;  // vehicle state matrix (discrete-time
+  Eigen::MatrixXd matrix_adc_;
+  Eigen::MatrixXd matrix_a_coeff_;
+
   Eigen::MatrixXd matrix_b_;   // control matrix
   Eigen::MatrixXd matrix_bd_;  // control matrix (discrete-time)
+  Eigen::MatrixXd matrix_bdc_;
   Eigen::MatrixXd matrix_k_;   // gain matrix
   Eigen::MatrixXd matrix_r_;   // control weighting matrix
   Eigen::MatrixXd matrix_q_;   // state weighting matrix
+  Eigen::MatrixXd matrix_q_updated_;
   Eigen::MatrixXd matrix_a_coeff;  // vehicle state matrix coefficients
   Eigen::MatrixXd matrix_state_;   // 4 by 1 matrix; state matrix
   // control state
@@ -95,6 +106,12 @@ class LatController {
   double min_speed_protection_;
   double cutoff_freq_;
   common::DigitalFilter digital_filter_;
+  common::MeanFilter distance_error_filter_;
+  common::MeanFilter heading_error_filter_;
+  uint8_t mean_filter_window_size_;
+  int basic_state_size_;
+  std::unique_ptr<common::Interpolation1D> distance_error_interpolation_;
+  std::unique_ptr<common::Interpolation1D> heading_error_interpolation_;
 };
 }  // namespace control
 

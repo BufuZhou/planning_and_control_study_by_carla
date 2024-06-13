@@ -59,7 +59,8 @@
     "hash_set": "cpp",
     "bitset": "cpp",
     "future": "cpp",
-    "iomanip": "cpp"
+    "iomanip": "cpp",
+    "core": "cpp"
   },
   "python.autoComplete.extraPaths": [
     "/home/lifanjie/planning_and_control_study_by_carla/install/turtlesim/lib/python3.8/site-packages",

@@ -8,6 +8,7 @@
 #include "control/lat_controller.hpp"
 #include "control/digital_filter_coefficients.hpp"
 
+
 namespace {
 std::string GetLogFileName() {
   time_t raw_time;
@@ -41,6 +42,9 @@ void WriteHeaders(std::ofstream &file_stream) {
 }  // namespace
 
 namespace control {
+
+using Matrix = Eigen::MatrixXd;
+
 LatController::LatController() : name_("LQR-based Lateral Controller") {
   std::cout << "lateral controller: " << name_ << std::endl;
   flags_enable_csv_debug = true;
@@ -56,11 +60,7 @@ LatController::~LatController() {
   CloseLogFile();
 }
 
-void LatController::CloseLogFile() {
-  if (flags_enable_csv_debug && steer_log_file_.is_open()) {
-    steer_log_file_.close();
-  }
-}
+
 
 void LatController::LoadControlConfig() {
   std::cout << "load lateral controller config..." << std::endl;
@@ -85,13 +85,10 @@ void LatController::LoadControlConfig() {
   // lqr solver paramters
   lqr_eps_ = 0.01;
   lqr_max_iteration_ = 150;
-  matrix_q_ = Eigen::MatrixXd::Zero(4, 4);
-  matrix_q_ << 1, 0.0, 0.0, 0.0,
-               0.0,  0.0, 0.0, 0.0,
-               0.0,  0.0, 1, 0.0,
-               0.0,  0.0, 0.0, 0.0;
-  matrix_r_ = Eigen::MatrixXd::Identity(1, 1);
-  cutoff_freq_ = 10.0;
+
+  cutoff_freq_ = 10.0F;
+  mean_filter_window_size_ = 10U;
+  basic_state_size_ = 4U;
   // std::cout << "load lateral controller finished..." << std::endl;
 }
 
@@ -139,13 +136,73 @@ void LatController::InitializeFilters() {
   std::vector<double> num(3, 0.0);
   common::LpfCoefficients(ts_, cutoff_freq_, &den, &num);
   digital_filter_.set_coefficients(den, num);
+  distance_error_filter_ = common::MeanFilter(mean_filter_window_size_);
+  heading_error_filter_ = common::MeanFilter(mean_filter_window_size_);
 }
 
+bool LatController::Init() {
+  const int matrix_size = basic_state_size_;
+  matrix_a_   = Eigen::MatrixXd::Zero(basic_state_size_, basic_state_size_);
+  matrix_ad_  = Eigen::MatrixXd::Zero(basic_state_size_, basic_state_size_);
+  matrix_adc_ = Eigen::MatrixXd::Zero(basic_state_size_, basic_state_size_);
 
+  matrix_a_(0, 1) = 1.0;
+  matrix_a_(1, 2) = (cf_ + cr_) / mass_;
+  matrix_a_(2, 3) = 1.0;
+  matrix_a_(3, 2) = (lf_ * cf_ - lr_ * cr_) / iz_;
 
+  matrix_a_coeff_ = Eigen::MatrixXd::Zero(basic_state_size_, basic_state_size_);
+  matrix_a_coeff_(1, 1) = -(cf_ + cr_) / mass_;
+  matrix_a_coeff_(1, 3) = (lr_ * cr_ - lf_ * cf_) / mass_;
+  matrix_a_coeff_(3, 1) = (lr_ * cr_ - lf_ * cf_) / iz_;
+  matrix_a_coeff_(3, 3) = -(lf_ * lf_ * cf_ + lr_ * lr_ * cr_) / iz_;
 
+  matrix_b_   = Eigen::MatrixXd::Zero(basic_state_size_, 1);
+  matrix_bd_  = Eigen::MatrixXd::Zero(basic_state_size_, 1);
+  matrix_bdc_ = Eigen::MatrixXd::Zero(basic_state_size_, 1);
+  matrix_b_(1, 0) = cf_ / mass_;
+  matrix_b_(3, 0) = lf_ * cf_ / iz_;
+  matrix_bd_ = matrix_b_ * ts_;
 
+  // update state matrix
+  matrix_state_ = Eigen::MatrixXd::Zero(basic_state_size_, 1);
+  matrix_k_ = Eigen::MatrixXd::Zero(1, matrix_size);
+  matrix_r_ = Eigen::MatrixXd::Identity(1, 1);
+  matrix_q_ = Matrix::Zero(matrix_size, matrix_size);
+  matrix_q_ << 1.0,  0.0, 0.0, 0.0,
+               0.0,  0.0, 0.0, 0.0,
+               0.0,  0.0, 1.0, 0.0,
+               0.0,  0.0, 0.0, 0.0;
+  matrix_q_updated_ = matrix_q_;
+  InitializeFilters();
+  // LoadLatGainScheduler();
+  LogInitParameters();
+  return true;
+}
 
+void LatController::CloseLogFile() {
+  if (flags_enable_csv_debug && steer_log_file_.is_open()) {
+    steer_log_file_.close();
+  }
+}
+
+void LatController::LoadLatGainScheduler() {
+  double distance_error_gain_speed[5] = {4.0, 8.0, 12.0, 20.0, 25.0};
+  double distance_error_gain_ratio[5] = {1.0, 0.6, 0.20, 0.01, 0.05};
+  double heading_error_gain_speed[5]  = {4.0, 8.0, 12.0, 20.0, 25.0};
+  double heading_error_gain_ratio[5]  = {1.0, 0.6, 0.40, 0.20, 0.10};
+
+  std::vector<std::pair<double, double>> xy1, xy2;
+  for (int ii = 0; ii < 5; ++ii) {
+    xy1.push_back(std::make_pair(distance_error_gain_speed[ii],
+                                 distance_error_gain_ratio[ii]));
+    xy2.push_back(std::make_pair(heading_error_gain_speed[ii],
+                                 heading_error_gain_ratio[ii]));
+  }
+
+  distance_error_interpolation_.reset(new common::Interpolation1D);
+  heading_error_interpolation_.reset(new common::Interpolation1D);
+}
 
 
 

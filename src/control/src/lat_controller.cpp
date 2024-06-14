@@ -204,7 +204,9 @@ void LatController::LoadLatGainScheduler() {
   heading_error_interpolation_.reset(new common::Interpolation1D);
 }
 
+void LatController::Stop() { CloseLogFile(); }
 
+std::string LatController::Name() const { return name_; }
 
 TrajectoryPoint LatController::QueryNearestPointByPosition(
   const double x, const double y,

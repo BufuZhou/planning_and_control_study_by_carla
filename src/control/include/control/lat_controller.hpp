@@ -60,6 +60,8 @@ class LatController {
   void computeFeedforward(double vx);
   bool Init();
   void LoadLatGainScheduler();
+  void Stop();
+  std::string Name() const;
 
   double ts_ = 0.0;         // control time interval, seconds
   // the following parameters are vehicle physics related

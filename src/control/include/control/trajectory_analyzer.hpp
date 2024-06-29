@@ -3,12 +3,13 @@
 #define SRC_CONTROL_INCLUDE_CONTROL_TRAJECTORY_ANALYZER_HPP_
 
 #include <vector>
-
+#include "common_msgs/msg/path_point.hpp"
 #include "common_msgs/msg/trajectory.hpp"
 #include "common_msgs/msg/trajectory_point.hpp"
 
-using common_msgs::msg::Trajectory;
+using common_msgs::msg::PathPoint;
 using common_msgs::msg::TrajectoryPoint;
+using common_msgs::msg::Trajectory;
 
 namespace control {
 
@@ -22,20 +23,20 @@ class TrajectoryAnalyzer {
   TrajectoryPoint QueryNearestPointByRelativeTime(const double t) const;
   TrajectoryPoint QueryNearestPointByPosition(const double x,
                                               const double y) const;
-  TrajectoryPoint QueryMatchedPathPoint(const double x, const double y) const;
+  PathPoint QueryMatchedPathPoint(const double x, const double y) const;
   void ToTrajectoryFrame(const double x, const double y, const double theta,
-                         const double v, const TrajectoryPoint &matched_point,
+                         const double v, const PathPoint &matched_point,
                          double *ptr_s, double *ptr_s_dot, double *ptr_d,
                          double *ptr_d_dot) const;
   const std::vector<TrajectoryPoint> &trajectory_points() const;
 
  private:
-  TrajectoryPoint FindMinDistance(const TrajectoryPoint &p0,
-                                  const TrajectoryPoint &p1, const double x,
-                                  const double y) const;
+  PathPoint FindMinDistancePoint(const TrajectoryPoint &p0,
+                                 const TrajectoryPoint &p1, const double x,
+                                 const double y) const;
   std::vector<TrajectoryPoint> trajectory_points_;
-  double header_time_ = 0.0;
-  double int seq_num_ = 0;
+  double  header_time_ = 0.0;
+  unsigned int seq_num_ = 0;
 };
 
 }  // namespace control

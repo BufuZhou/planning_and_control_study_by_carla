@@ -54,21 +54,21 @@ bool PlanningNode::loadRoadMap() {
   // 根据离散的点组成的路径，生成路网航向角,累计距离，曲率，曲率的导数
   computePathProfile(xy_points, &headings, &accumulated_s, &kappas, &dkappas);
 
-  for (size_t i = 0; i < headings.size(); i++) {
-    common_msgs::msg::TrajectoryPoint trajectory_point;
-    trajectory_point.x = xy_points[i].first;
-    trajectory_point.y = xy_points[i].second;
-    trajectory_point.v = target_velocity_;
-    trajectory_point.a = 0.0;
-    trajectory_point.theta = headings[i];
-    trajectory_point.kappa = kappas[i];
-    std::cout << trajectory_point.x << " " << trajectory_point.y << " "
-              << trajectory_point.v << " " << trajectory_point.theta << " "
-              << trajectory_point.kappa << std::endl;
-    trajectory_.trajectory.push_back(trajectory_point);
-  }
-  // trajectory_
-  trajectory_publisher_->publish(trajectory_);
+  // for (size_t i = 0; i < headings.size(); i++) {
+  //   common_msgs::msg::TrajectoryPoint trajectory_point;
+  //   trajectory_point.x = xy_points[i].first;
+  //   trajectory_point.y = xy_points[i].second;
+  //   trajectory_point.v = target_velocity_;
+  //   trajectory_point.a = 0.0;
+  //   trajectory_point.theta = headings[i];
+  //   trajectory_point.kappa = kappas[i];
+  //   std::cout << trajectory_point.x << " " << trajectory_point.y << " "
+  //             << trajectory_point.v << " " << trajectory_point.theta << " "
+  //             << trajectory_point.kappa << std::endl;
+  //   trajectory_.trajectory.push_back(trajectory_point);
+  // }
+  // // trajectory_
+  // trajectory_publisher_->publish(trajectory_);
 
   return true;
 }
@@ -222,10 +222,10 @@ bool PlanningNode::computePathProfile(
 
 
 void PlanningNode::getWayPoints() {
-  for (unsigned int i = 0; i < trajectory_.trajectory.size(); i++) {
-    way_point_x_.push_back(trajectory_.trajectory[i].x);
-    way_point_x_.push_back(trajectory_.trajectory[i].y);
-  }
+  // for (unsigned int i = 0; i < trajectory_.trajectory.size(); i++) {
+  //   way_point_x_.push_back(trajectory_.trajectory[i].x);
+  //   way_point_x_.push_back(trajectory_.trajectory[i].y);
+  // }
 }
 
 }  // namespace planning

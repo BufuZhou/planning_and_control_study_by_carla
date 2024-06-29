@@ -1,6 +1,6 @@
 // Copyright 2016 Open Source Robotics Foundation, Inc.
-#ifndef SRC_CONTROL_INCLUDE_CONTROL_NODE_HPP_
-#define SRC_CONTROL_INCLUDE_CONTROL_NODE_HPP_
+#ifndef SRC_CONTROL_INCLUDE_CONTROL_CONTROL_NODE_HPP_
+#define SRC_CONTROL_INCLUDE_CONTROL_CONTROL_NODE_HPP_
 // #include "control_cmd.pb.h"
 #include "rclcpp/rclcpp.hpp"
 #include "common_msgs/msg/control_command.hpp"

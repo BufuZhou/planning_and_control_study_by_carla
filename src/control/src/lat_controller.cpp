@@ -215,24 +215,24 @@ TrajectoryPoint LatController::QueryNearestPointByPosition(
   // std::cout << planning_trajectory->trajectory[0].x << std::endl;
   auto trajectory = planning_trajectory->trajectory;
 
-  auto func_distance_square = [](const common_msgs::msg::TrajectoryPoint &point,
-                                 const double x, const double y) {
-    double dx = point.x - x;
-    double dy = point.y - y;
-    return dx * dx + dy * dy;
-  };
+  // auto func_distance_square = [](const common_msgs::msg::TrajectoryPoint &point,
+  //                                const double x, const double y) {
+  //   double dx = point.x - x;
+  //   double dy = point.y - y;
+  //   return dx * dx + dy * dy;
+  // };
 
-  double d_min =
-      func_distance_square(trajectory.front(), x, y);
+  // double d_min =
+  //     func_distance_square(trajectory.front(), x, y);
   size_t index_min = 0;
 
-  for (size_t i = 1; i < trajectory.size(); ++i) {
-    double d_temp = func_distance_square(trajectory[i], x, y);
-    if (d_temp < d_min) {
-      d_min = d_temp;
-      index_min = i;
-    }
-  }
+  // for (size_t i = 1; i < trajectory.size(); ++i) {
+  //   double d_temp = func_distance_square(trajectory[i], x, y);
+  //   if (d_temp < d_min) {
+  //     d_min = d_temp;
+  //     index_min = i;
+  //   }
+  // }
   // std::cout << "nearest point........." << std::endl;
   // std::cout << index_min << std::endl;
   // std::cout << trajectory[index_min].x << std::endl;
@@ -247,20 +247,20 @@ void LatController::computeLateralErrors(
   // the trajectory point closest to the actual position of the vehicle
   common_msgs::msg::TrajectoryPoint target_point;
 
-  target_point = QueryNearestPointByPosition(x, y, trajectory);
-  double dx = target_point.x - x;
-  double dy = target_point.y - y;
+  // target_point = QueryNearestPointByPosition(x, y, trajectory);
+  // double dx = target_point.x - x;
+  // double dy = target_point.y - y;
   // std::cout << "reference heading: " << target_point.theta
   //           << std::endl;
   // std::cout << "ego vehicle heading: " << theta << std::endl;
 
-  double cos_ego_heading = std::cos(target_point.theta);
-  double sin_ego_heading = std::sin(target_point.theta);
-  lateral_error_ = dy * cos_ego_heading - dx * sin_ego_heading;
-  heading_error_ = target_point.theta - theta;
+  // double cos_ego_heading = std::cos(target_point.theta);
+  // double sin_ego_heading = std::sin(target_point.theta);
+  // lateral_error_ = dy * cos_ego_heading - dx * sin_ego_heading;
+  // heading_error_ = target_point.theta - theta;
 
-  std::cout << "lateral error" << lateral_error_ << std::endl;
-  std::cout << "heading error" << heading_error_ << std::endl;
+  // std::cout << "lateral error" << lateral_error_ << std::endl;
+  // std::cout << "heading error" << heading_error_ << std::endl;
 
   // todo: how to calculate lateral_error_dot and heading_error_dot
   // lateral_error_dot_ = linear_v * std::sin(heading_error_);
@@ -350,7 +350,7 @@ void LatController::computeControlCommand(
   common_msgs::msg::TrajectoryPoint target_point;
   LoadControlConfig();
 
-  std::cout << planning_trajectory->trajectory.front().x << std::endl;
+  // std::cout << planning_trajectory->trajectory.front().x << std::endl;
   computeLateralErrors(localization->x, localization->y, localization->yaw,
                        planning_trajectory);
 

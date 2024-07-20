@@ -1,4 +1,4 @@
-// copyright
+// Copyright 2024
 #ifndef SRC_CONTROL_INCLUDE_CONTROL_LAT_CONTROLLER_HPP_
 #define SRC_CONTROL_INCLUDE_CONTROL_LAT_CONTROLLER_HPP_
 #include <Eigen/Dense>
@@ -12,21 +12,22 @@
 #include "control/digital_filter.hpp"
 #include "control/mean_filter.hpp"
 #include "control/interpolation_1d.hpp"
+#include "common_msgs/msg/pose.hpp"
+
+namespace control {
 
 using common_msgs::msg::TrajectoryPoint;
 using common_msgs::msg::Pose;
 using common_msgs::msg::Trajectory;
 using common_msgs::msg::LateralControlDebug;
-#define PI 3.141592653589793
 
-namespace control {
 class LatController {
  public:
   LatController();
   ~LatController();
-  double get_steering_angle_command();
+  double GetSteeringAngleCommand();
 
-  void computeControlCommand(const Pose *localization,
+  void ComputeControlCommand(const Pose *localization,
                              const Trajectory *planning_trajectory);
 
  private:
@@ -46,7 +47,7 @@ class LatController {
     const double x, const double y,
     const Trajectory *trajectory);
   // compute leteral control error
-  void computeLateralErrors(
+  void ComputeLateralErrors(
       const double x, const double y, const double theta,
       const Trajectory *trajectory);
   // lqr state space model based by vehicle dynamics

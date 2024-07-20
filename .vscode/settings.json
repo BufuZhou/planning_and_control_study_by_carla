@@ -77,5 +77,6 @@
   ],
   "C_Cpp.errorSquiggles": "disabled",
   "cpplint.cpplintPath": "/usr/local/bin/cpplint",
-  "editor.tabSize": 2
+  "editor.tabSize": 2,
+  "cmake.sourceDirectory": "/home/lifanjie/planning_and_control_study_by_carla/src/planning"
 }

@@ -11,3 +11,7 @@ float64 steering
 # second [0, 100]
 float64 steering_rate
 
+
+float64 steering_target
+
+LateralControlDebug simple_lat_debug

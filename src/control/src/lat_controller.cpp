@@ -16,6 +16,7 @@ using Matrix = Eigen::MatrixXd;
 #define PI 3.141592653589793
 
 namespace {
+
 std::string GetLogFileName() {
   time_t raw_time;
   char name_buffer[80];
@@ -49,13 +50,14 @@ void WriteHeaders(std::ofstream &file_stream) {
 
 LatController::LatController() : name_("LQR-based Lateral Controller") {
   std::cout << "lateral controller: " << name_ << std::endl;
-  flags_enable_csv_debug = true;
-  if (flags_enable_csv_debug) {
+  FLAGS_enable_csv_debug = true;
+  if (FLAGS_enable_csv_debug) {
     steer_log_file_.open(GetLogFileName());
     steer_log_file_ << std::fixed;
     steer_log_file_ << std::setprecision(6);
     WriteHeaders(steer_log_file_);
   }
+  std::cout << "Using " << name_ << std::endl;
 }
 
 LatController::~LatController() { CloseLogFile(); }
@@ -110,7 +112,7 @@ void LatController::ProcessLogs(const LateralControlDebug *debug) {
       to_string(debug->steer_angle) + "," +  // todo: steering_percentage
       to_string(debug->steer_angle);         // todo: linear_velocity
 
-  if (flags_enable_csv_debug) {
+  if (FLAGS_enable_csv_debug) {
     steer_log_file_ << log_str << std::endl;
   }
   std::cout << "Lateral_Controller_Detail: " << log_str << std::endl;
@@ -174,7 +176,7 @@ bool LatController::Init() {
 }
 
 void LatController::CloseLogFile() {
-  if (flags_enable_csv_debug && steer_log_file_.is_open()) {
+  if (FLAGS_enable_csv_debug && steer_log_file_.is_open()) {
     steer_log_file_.close();
   }
 }
@@ -203,15 +205,24 @@ std::string LatController::Name() const { return name_; }
 
 void LatController::ComputeControlCommand(
     const common_msgs::msg::Pose *localization,
-    const common_msgs::msg::Trajectory *planning_trajectory) {
+    const common_msgs::msg::Trajectory *planning_published_trajectory,
+    ControlCommand *cmd) {
   std::cout << "lateral controller start......" << std::endl;
+  auto target_tracking_trajectory = *planning_published_trajectory;
+
+  trajectory_analyzer_ =
+      std::move(TrajectoryAnalyzer(&target_tracking_trajectory));
+  LateralControlDebug debug = cmd->simple_lat_debug;
+
+
+
   // the trajectory point closest to the actual position of the vehicle
   common_msgs::msg::TrajectoryPoint target_point;
   LoadControlConfig();
 
   // std::cout << planning_trajectory->trajectory.front().x << std::endl;
   ComputeLateralErrors(localization->x, localization->y, localization->yaw,
-                       planning_trajectory);
+                       planning_published_trajectory);
 
   // Calculate the speed of the vehicle along the vehicle's x-axis
   double vx = localization->vel_y * std::cos(localization->yaw) +
@@ -356,6 +367,11 @@ void LatController::solveLqrProblem(
   }
   *ptr_K = (R + BT * P * B).inverse() * BT * P * A;
 }
+
+
+// void LatController::UpdateState(LateralControlDebug *debug) {
+  
+// }
 
 
 

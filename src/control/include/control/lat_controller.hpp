@@ -13,6 +13,7 @@
 #include "control/mean_filter.hpp"
 #include "control/interpolation_1d.hpp"
 #include "common_msgs/msg/pose.hpp"
+#include "control/trajectory_analyzer.hpp"
 
 namespace control {
 
@@ -20,6 +21,7 @@ using common_msgs::msg::TrajectoryPoint;
 using common_msgs::msg::Pose;
 using common_msgs::msg::Trajectory;
 using common_msgs::msg::LateralControlDebug;
+using common_msgs::msg::ControlCommand;
 
 class LatController {
  public:
@@ -28,7 +30,11 @@ class LatController {
   double GetSteeringAngleCommand();
 
   void ComputeControlCommand(const Pose *localization,
-                             const Trajectory *planning_trajectory);
+                             const Trajectory *planning_published_trajectory,
+                             ControlCommand *cmd);
+
+//  private:
+//   // void LatController::UpdateState(LateralControlDebug *debug);
 
  private:
   // lateral controller name
@@ -36,7 +42,7 @@ class LatController {
   // for logging purpose
   std::ofstream steer_log_file_;
   // get the dynamic bicycle model parameters
-  bool flags_enable_csv_debug;
+  bool FLAGS_enable_csv_debug;
   void CloseLogFile();
   void LoadControlConfig();
   void ProcessLogs(const LateralControlDebug *debug);
@@ -115,6 +121,10 @@ class LatController {
   int basic_state_size_;
   std::unique_ptr<common::Interpolation1D> distance_error_interpolation_;
   std::unique_ptr<common::Interpolation1D> heading_error_interpolation_;
+
+  // a proxy to analyze the planning trajectory
+  TrajectoryAnalyzer trajectory_analyzer_;
+
 };
 }  // namespace control
 

@@ -84,7 +84,8 @@ void ControlNode::compute_lateral_command() {
 
   // calculate steering angle by lateral controller
   LatController lateral_controller;
-  lateral_controller.ComputeControlCommand(&pose_, &trajectory_);
+  ControlCommand cmd;
+  lateral_controller.ComputeControlCommand(&pose_, &trajectory_, &cmd);
   double front_steering_angle = lateral_controller.GetSteeringAngleCommand();
   RCLCPP_INFO(this->get_logger(), "front_steering_angle: %lf",
               front_steering_angle);

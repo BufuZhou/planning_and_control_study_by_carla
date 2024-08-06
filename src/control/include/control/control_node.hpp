@@ -17,7 +17,6 @@ class ControlNode : public rclcpp::Node {
   void get_trajectory(common_msgs::msg::Trajectory::SharedPtr msg);
   void get_localization(common_msgs::msg::Pose::SharedPtr msg);
   void compute_lateral_command();
-  void send_control_command();
   void send_vehicle_command();
 
  private:

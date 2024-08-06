@@ -4,8 +4,13 @@
 #include <chrono>
 #include "rclcpp/logging.hpp"
 #include "control/control_node.hpp"
-using namespace std::chrono_literals;
+
+
 using std::placeholders::_1;
+
+// using namespace std::chrono_literals;
+// for ms
+using std::literals::chrono_literals::operator""ms;
 
 namespace control {
 ControlNode::ControlNode() : Node("control"), count_(0) {
@@ -41,13 +46,6 @@ ControlNode::ControlNode() : Node("control"), count_(0) {
 
   timer_ = this->create_wall_timer(
       100ms, std::bind(&ControlNode::send_vehicle_command, this));
-
-  // set command to vehicle node
-  // ego_vehicle_control_cmd_publisher_ =
-  //     this->create_publisher<common_msgs::msg::ControlCommand>(
-  //         "/control/control_command", 10);
-  // timer_ = this->create_wall_timer(
-  //     500ms, std::bind(&ControlNode::send_control_command, this));
 }
 
 void ControlNode::get_trajectory(common_msgs::msg::Trajectory::SharedPtr msg) {
@@ -105,15 +103,6 @@ void ControlNode::send_vehicle_command() {
   carla_vehicle_control_cmd_publisher_->publish(carla_vehicle_command_);
   RCLCPP_INFO(this->get_logger(), "Publishing %d: %f, %f", (count_++),
               carla_vehicle_command_.throttle, carla_vehicle_command_.steer);
-}
-
-void ControlNode::send_control_command() {
-  // LatController temp;
-  // control_command_.acceleration = 0.5;
-  // control_cmd_.steering = temp.get_target_steering_angle();
-  // ego_vehicle_control_cmd_publisher_->publish(control_command_);
-  // RCLCPP_INFO(this->get_logger(), "Publishing %d: %f %f", (count_++),
-  //             control_command_.acceleration, control_command_.steering);
 }
 
 }  // namespace control

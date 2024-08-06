@@ -15,52 +15,12 @@ namespace control {
 using Matrix = Eigen::MatrixXd;
 #define PI 3.141592653589793
 
-namespace {
-
-std::string GetLogFileName() {
-  time_t raw_time;
-  char name_buffer[80];
-  std::time(&raw_time);
-  strftime(name_buffer, 80, "/tmp/steer_log_simple_optimal_%F_%H%M%S.csv",
-           localtime(&raw_time));
-  return std::string(name_buffer);
-}
-
-void WriteHeaders(std::ofstream &file_stream) {
-  file_stream << "ref_lateral_distance,"
-              << "lateral_distance,"
-              << "lateral_error,"
-              << "ref_heading,"
-              << "heading,"
-              << "heading_error,"
-              << "heading_error_rate,"
-              << "lateral_error_rate,"
-              << "curvature,"
-              << "steer_angle,"
-              << "steer_angle_feedforward,"
-              << "steer_angle_lateral_contribution,"
-              << "steer_angle_lateral_rate_contribution,"
-              << "steer_angle_heading_contribution,"
-              << "steer_angle_heading_rate_contribution,"
-              << "steer_angle_feedback,"
-              << "steer_position"
-              << "v" << std::endl;
-}
-}  // namespace
-
 LatController::LatController() : name_("LQR-based Lateral Controller") {
   std::cout << "lateral controller: " << name_ << std::endl;
-  FLAGS_enable_csv_debug = true;
-  if (FLAGS_enable_csv_debug) {
-    steer_log_file_.open(GetLogFileName());
-    steer_log_file_ << std::fixed;
-    steer_log_file_ << std::setprecision(6);
-    WriteHeaders(steer_log_file_);
-  }
   std::cout << "Using " << name_ << std::endl;
 }
 
-LatController::~LatController() { CloseLogFile(); }
+LatController::~LatController() { }
 
 void LatController::LoadControlConfig() {
   std::cout << "load lateral controller config..." << std::endl;
@@ -79,62 +39,12 @@ void LatController::LoadControlConfig() {
   lf_ = wheelbase_ * (1.0 - mass_front / mass_);
   lr_ = wheelbase_ * (1.0 - mass_rear / mass_);
   iz_ = lf_ * lf_ * mass_front + lr_ * lr_ * mass_rear;
-  max_front_wheel_steer_angle_ = 70.0 * PI / 180.0;
   max_lat_acc_ = 5.0;
   min_speed_protection_ = 0.1;
   // lqr solver paramters
   lqr_eps_ = 0.01;
   lqr_max_iteration_ = 150;
 
-  cutoff_freq_ = 10.0F;
-  mean_filter_window_size_ = 10U;
-  basic_state_size_ = 4U;
-  // std::cout << "load lateral controller finished..." << std::endl;
-}
-
-void LatController::ProcessLogs(const LateralControlDebug *debug) {
-  using std::to_string;
-  const std::string log_str = to_string(debug->ref_lateral_distance) + "," +
-                              to_string(debug->lateral_distance) + "," +
-                              to_string(debug->lateral_distance) + "," +
-                              to_string(debug->lateral_distance_error) + ",";
-  to_string(debug->ref_heading) + "," + to_string(debug->heading) + "," +
-      to_string(debug->heading_error) + ",";
-  to_string(debug->heading_error) + "," + to_string(debug->heading_error_rate) +
-      "," + to_string(debug->curvature) + ",";
-  to_string(debug->steer_angle) + "," +
-      to_string(debug->steer_angle_feedforward) + "," +
-      to_string(debug->lateral_distance_contribution) + ",";
-  to_string(debug->lateral_distance_rate_contribution) + "," +
-      to_string(debug->heading_contribudtion) + "," +
-      to_string(debug->heading_rate_contribution) + "," +
-      to_string(debug->steer_angle_feedback) + "," +
-      to_string(debug->steer_angle) + "," +  // todo: steering_percentage
-      to_string(debug->steer_angle);         // todo: linear_velocity
-
-  if (FLAGS_enable_csv_debug) {
-    steer_log_file_ << log_str << std::endl;
-  }
-  std::cout << "Lateral_Controller_Detail: " << log_str << std::endl;
-}
-
-void LatController::LogInitParameters() {
-  std::cout << name_ << " begin.";
-  std::cout << "[LatController parameters]"
-            << " mass_: " << mass_ << ","
-            << " iz_: " << iz_ << ","
-            << " lf_: " << lf_ << ","
-            << " lr_: " << lr_;
-}
-
-void LatController::InitializeFilters() {
-  // Low pass filter
-  std::vector<double> den(3, 0.0);
-  std::vector<double> num(3, 0.0);
-  common::LpfCoefficients(ts_, cutoff_freq_, &den, &num);
-  digital_filter_.set_coefficients(den, num);
-  distance_error_filter_ = common::MeanFilter(mean_filter_window_size_);
-  heading_error_filter_ = common::MeanFilter(mean_filter_window_size_);
 }
 
 bool LatController::Init() {
@@ -169,37 +79,8 @@ bool LatController::Init() {
   matrix_q_ << 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
       0.0, 0.0, 0.0;
   matrix_q_updated_ = matrix_q_;
-  InitializeFilters();
-  // LoadLatGainScheduler();
-  LogInitParameters();
   return true;
 }
-
-void LatController::CloseLogFile() {
-  if (FLAGS_enable_csv_debug && steer_log_file_.is_open()) {
-    steer_log_file_.close();
-  }
-}
-
-void LatController::LoadLatGainScheduler() {
-  double distance_error_gain_speed[5] = {4.0, 8.0, 12.0, 20.0, 25.0};
-  double distance_error_gain_ratio[5] = {1.0, 0.6, 0.20, 0.01, 0.05};
-  double heading_error_gain_speed[5] = {4.0, 8.0, 12.0, 20.0, 25.0};
-  double heading_error_gain_ratio[5] = {1.0, 0.6, 0.40, 0.20, 0.10};
-
-  std::vector<std::pair<double, double>> xy1, xy2;
-  for (int ii = 0; ii < 5; ++ii) {
-    xy1.push_back(std::make_pair(distance_error_gain_speed[ii],
-                                 distance_error_gain_ratio[ii]));
-    xy2.push_back(std::make_pair(heading_error_gain_speed[ii],
-                                 heading_error_gain_ratio[ii]));
-  }
-
-  distance_error_interpolation_.reset(new common::Interpolation1D);
-  heading_error_interpolation_.reset(new common::Interpolation1D);
-}
-
-void LatController::Stop() { CloseLogFile(); }
 
 std::string LatController::Name() const { return name_; }
 

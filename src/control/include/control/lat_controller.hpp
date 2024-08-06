@@ -33,21 +33,13 @@ class LatController {
                              const Trajectory *planning_published_trajectory,
                              ControlCommand *cmd);
 
-//  private:
-//   // void LatController::UpdateState(LateralControlDebug *debug);
-
  private:
   // lateral controller name
   const std::string name_;
   // for logging purpose
   std::ofstream steer_log_file_;
   // get the dynamic bicycle model parameters
-  bool FLAGS_enable_csv_debug;
-  void CloseLogFile();
   void LoadControlConfig();
-  void ProcessLogs(const LateralControlDebug *debug);
-  void LogInitParameters();
-  void InitializeFilters();
   // get target trajectory point
   TrajectoryPoint QueryNearestPointByPosition(
     const double x, const double y,
@@ -66,8 +58,6 @@ class LatController {
   // compute feedforward steering angle
   void computeFeedforward(double vx);
   bool Init();
-  void LoadLatGainScheduler();
-  void Stop();
   std::string Name() const;
 
   double ts_ = 0.0;         // control time interval, seconds
@@ -124,7 +114,6 @@ class LatController {
 
   // a proxy to analyze the planning trajectory
   TrajectoryAnalyzer trajectory_analyzer_;
-
 };
 }  // namespace control
 

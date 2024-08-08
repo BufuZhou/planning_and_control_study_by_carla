@@ -4,7 +4,7 @@
 #include <chrono>
 #include "rclcpp/logging.hpp"
 #include "control/control_node.hpp"
-
+#include "common/proto_util.hpp"
 
 using std::placeholders::_1;
 

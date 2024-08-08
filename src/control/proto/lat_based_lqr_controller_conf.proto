@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package control;
+
+message LatBaseLqrControllerConf{
+  double ts = 1;  // sample time (dt) 0.01 now, configurable
+  int32 preview_window = 2;
+}

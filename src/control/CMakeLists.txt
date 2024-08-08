@@ -19,6 +19,7 @@ find_package(carla_msgs REQUIRED)
 find_package(common_msgs REQUIRED)
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(common REQUIRED)
 
 set(EIGEN3_INCLUDE_DIR "/usr/include/eigen3")
 include_directories(${EIGEN3_INCLUDE_DIR})
@@ -111,7 +112,13 @@ ${PROTO_OUTPUT_PATH}
 )
 
 # 添加ros相关的依赖，和前面find_package相对应
-ament_target_dependencies(${PROJECT_NAME}_node rclcpp std_msgs carla_msgs common_msgs Eigen3)
+ament_target_dependencies(${PROJECT_NAME}_node 
+  rclcpp
+  std_msgs
+  carla_msgs 
+  common_msgs
+  Eigen3
+  common)
 ament_export_dependencies(eigen3_cmake_module)
 ament_export_dependencies(Eigen3)
 

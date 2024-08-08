@@ -1,2 +1,9 @@
 ts: 0.01
 preview_window: 0
+cf: 155494.663
+cr: 155494.663
+mass_fl: 520
+mass_fr: 520
+mass_rl: 520
+mass_rr: 520
+eps: 0.01

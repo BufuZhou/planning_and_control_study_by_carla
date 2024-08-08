@@ -62,6 +62,8 @@ else()
   message("PROTO_OUTPUT_PATH generate.")
 endif()
 message("PROTO_OUTPUT_PATH: ${PROTO_OUTPUT_PATH}")
+include_directories(${PROTO_OUTPUT_PATH})
+
 
 # 获取需要编译的proto文件
 file(GLOB_RECURSE ALL_PROTO_FILES ${PROTO_FILE_PATH}/*.proto)
@@ -108,7 +110,7 @@ src/digital_filter.cpp
 src/mean_filter.cpp
 src/interpolation_1d.cpp
 src/trajectory_analyzer.cpp
-${PROTO_OUTPUT_PATH}
+${PROTO_GENERATE_SRC}
 )
 
 # 添加ros相关的依赖，和前面find_package相对应
@@ -118,7 +120,8 @@ ament_target_dependencies(${PROJECT_NAME}_node
   carla_msgs 
   common_msgs
   Eigen3
-  common)
+  common
+  Protobuf)
 ament_export_dependencies(eigen3_cmake_module)
 ament_export_dependencies(Eigen3)
 
@@ -126,7 +129,7 @@ target_include_directories( ${PROJECT_NAME}_node PUBLIC
                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
                             $<INSTALL_INTERFACE:include>
                             $<BUILD_INTERFACE:${Protobuf_INCLUDE_DIRS}>
-                            $<BUILD_INTERFACE:${PROTO_OUTPUT_PATH}>
+                            $<BUILD_INTERFACE:${PROTO_OUTPUT_PATH}>>
 )
 
 # 读取yaml配置参数

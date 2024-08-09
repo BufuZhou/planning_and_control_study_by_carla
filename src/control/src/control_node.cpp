@@ -20,8 +20,6 @@ ControlNode::ControlNode() : Node("control"), count_(0) {
       "/home/lifanjie/planning_and_control_study_by_carla/src/control/config/"
       "controller_conf.pb.txt",
       &lat_controller_conf);
-  std::cout << lat_controller_conf.DebugString() << std::endl;
-  std::cout << lat_controller_conf.cf() << std::endl;
   control_command_.acceleration = 0.50;
   has_subscribed_trajectory_ = false;
   has_subscribed_pose_ = false;

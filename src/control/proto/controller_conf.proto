@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package control.pb;
+
+import "lat_based_lqr_controller_conf.proto";
+
+message ControllerConf {
+  control.pb.LatBaseLqrControllerConf lat_lqr_controller_conf = 1;
+} 

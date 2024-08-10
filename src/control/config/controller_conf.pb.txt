@@ -1,9 +1,59 @@
-ts: 0.01
-preview_window: 0
-cf: 155494.663
-cr: 155494.663
-mass_fl: 520
-mass_fr: 520
-mass_rl: 520
-mass_rr: 520
-eps: 0.01
+lat_lqr_controller_conf {
+  ts: 0.01
+  cf: 155494.663
+  cr: 155494.663
+  mass_fl: 424.0
+  mass_fr: 424.0
+  mass_rl: 424.0
+  mass_rr: 424.0
+  eps: 0.01
+  matrix_q: 0.05
+  matrix_q: 0.0
+  matrix_q: 1.0
+  matrix_q: 0.0
+  max_iteration: 150
+  lat_err_gain_scheduler {
+    scheduler {
+      speed: 4.0
+      ratio: 1.0
+    }
+    scheduler {
+      speed: 8.0
+      ratio: 0.6
+    }
+    scheduler {
+      speed: 12.0
+      ratio: 0.2
+    }
+    scheduler {
+      speed: 20.0
+      ratio: 0.1
+    }
+    scheduler {
+      speed: 25.0
+      ratio: 0.05
+    }
+  }
+  heading_err_gain_scheduler {
+    scheduler {
+      speed: 4.0
+      ratio: 1.0
+    }
+    scheduler {
+      speed: 8.0
+      ratio: 0.6
+    }
+    scheduler {
+      speed: 12.0
+      ratio: 0.4
+    }
+    scheduler {
+      speed: 20.0
+      ratio: 0.2
+    }
+    scheduler {
+      speed: 25.0
+      ratio: 0.1
+    }
+  }
+}

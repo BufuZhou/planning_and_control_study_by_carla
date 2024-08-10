@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package control.pb;
+
+message GainScheduler {
+  repeated GainSchedulerInfo scheduler = 1;
+}
+
+message GainSchedulerInfo {
+  double speed = 1;  // m/s
+  double ratio = 2;
+}

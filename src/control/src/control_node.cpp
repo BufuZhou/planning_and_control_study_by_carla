@@ -6,6 +6,7 @@
 #include "control/control_node.hpp"
 #include "common/proto_util.hpp"
 #include "lat_based_lqr_controller_conf.pb.h"
+#include "controller_conf.pb.h"
 
 using std::placeholders::_1;
 
@@ -15,11 +16,13 @@ using std::literals::chrono_literals::operator""ms;
 
 namespace control {
 ControlNode::ControlNode() : Node("control"), count_(0) {
-  control::pb::LatBaseLqrControllerConf lat_controller_conf;
+  control::pb::ControllerConf controller_conf;
   ::common::ReadProtoFromTextFile(
       "/home/lifanjie/planning_and_control_study_by_carla/src/control/config/"
       "controller_conf.pb.txt",
-      &lat_controller_conf);
+      &controller_conf);
+  std::cout << controller_conf.DebugString() << std::endl;
+  // std::cout << controller_conf.cf() << std::endl;
   control_command_.acceleration = 0.50;
   has_subscribed_trajectory_ = false;
   has_subscribed_pose_ = false;

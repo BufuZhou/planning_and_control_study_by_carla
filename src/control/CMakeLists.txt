@@ -49,9 +49,7 @@ else ()
     message(FATAL_ERROR "Cannot find Protobuf")
 endif ()
 
-# 设置proto所在目录
-SET(PROTO_FILE_PATH ${CMAKE_SOURCE_DIR}/proto)
-message("PROTO_FILE_PATH: ${PROTO_FILE_PATH}")
+
 
 # 设置proto生成文件路径
 set(PROTO_OUTPUT_PATH  ${CMAKE_BINARY_DIR}/control_proto_generate)
@@ -64,9 +62,15 @@ endif()
 message("PROTO_OUTPUT_PATH: ${PROTO_OUTPUT_PATH}")
 include_directories(${PROTO_OUTPUT_PATH})
 
-
+# 设置proto所在目录
+SET(PROTO_FILE_PATH ${CMAKE_SOURCE_DIR}/proto)
+message("PROTO_FILE_PATH: ${PROTO_FILE_PATH}")
 # 获取需要编译的proto文件
-file(GLOB_RECURSE ALL_PROTO_FILES ${PROTO_FILE_PATH}/*.proto)
+# file(GLOB_RECURSE ALL_PROTO_FILES ${PROTO_FILE_PATH}/*.proto)
+SET(ALL_PROTO_FILES
+      ${PROTO_FILE_PATH}/gain_scheduler_conf.proto 
+      ${PROTO_FILE_PATH}/lat_based_lqr_controller_conf.proto
+      ${PROTO_FILE_PATH}/controller_conf.proto)
 message("ALL_PROTO_FILE: ${ALL_PROTO_FILES}")
 
 # 根据proto编译.cc和.hpp

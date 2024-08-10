@@ -2,33 +2,19 @@ syntax = "proto3";
 
 package control.pb;
 
+import "gain_scheduler_conf.proto";
+
 message LatBaseLqrControllerConf{
   double ts = 1;  // sample time (dt) 0.01 now, configurable
-  double cf = 3;
-  double cr = 4;  // N/rad
-  int32 mass_fl = 5;
-  int32 mass_fr = 6;
-  int32 mass_rl = 7;
-  int32 mass_rr = 8;
+  double cf = 2;
+  double cr = 3;  // N/rad
+  double mass_fl = 4;
+  double mass_fr = 5;
+  double mass_rl = 6;
+  double mass_rr = 7;
+  repeated double matrix_q = 8;  // matrix_q size = 4 
   double eps = 9;        // converge threshold for lqr solver
-  repeated double matrix_q = 10;  // matrix_q size = 4 + preview_window
-  int32 max_iteration = 11;  // maximum iteration for lqr solve
-
-
-  // from gflags and control_conf.proto
-  optional double lock_steer_speed = 27 [default = 0.081];
-  optional bool enable_navigation_mode_error_filter = 28 [default = false];
-  optional bool enable_navigation_mode_position_update = 29 [default = true];
-  optional double query_relative_time = 30 [default = 0.8];
-  optional bool trajectory_transform_to_com_reverse = 31 [default = false];
-  optional bool trajectory_transform_to_com_drive = 32 [default = false];
-  optional bool enable_feedback_augment_on_high_speed = 33 [default = false];
-  optional bool enable_maximum_steer_rate_limit = 34 [default = false];
-  optional bool query_time_nearest_point_only = 35 [default = false];
-
-  optional double switch_speed = 36;  // low/high speed controller switch speed
-  optional double switch_speed_window = 37 [default = 0.0];
-  optional double reverse_feedforward_ratio = 38 [default = 1.0];
-
-  optional bool reverse_use_dynamic_model = 39 [default = false];
+  int32 max_iteration = 10;  // maximum iteration for lqr solve
+  control.pb.GainScheduler lat_err_gain_scheduler = 11;
+  control.pb.GainScheduler heading_err_gain_scheduler = 12;
 }

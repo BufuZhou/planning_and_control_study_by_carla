@@ -52,10 +52,12 @@ http://dev.ros2.fishros.com/doc/Tutorials/Workspace/Creating-A-Workspace.html
 https://docs.ros.org/en/foxy/Tutorials/Beginner-CLI-Tools/Introducing-Turtlesim/Introducing-Turtlesim.html
 
 ## create package
-
+colcon build  --cmake-args
+colcon build --event-handlers console_direct+ --cmake-args -DCMAKE_VERBOSE_MAKEFILE=ON
 
 # Module
-# carla 0.9.13
+# carla 0.9.13colcon build --event-handlers console_direct+ --cmake-args -DCMAKE_VERBOSE_MAKEFILE=ON
+
 cd ~/CARLA_0.9.13/
 ./CarlaUE4.sh
 
@@ -102,3 +104,7 @@ control comand to carla vehicle and get vehicle info from carla
 generate control command to control the vehicle
 
 ## planning
+
+
+
+

@@ -5,23 +5,24 @@
 #include "rclcpp/logging.hpp"
 #include "control/control_node.hpp"
 #include "common/proto_util.hpp"
-#include "lat_based_lqr_controller_conf.pb.h"
-#include "controller_conf.pb.h"
 
-using std::placeholders::_1;
-
-// using namespace std::chrono_literals;
-// for ms
-using std::literals::chrono_literals::operator""ms;
 
 namespace control {
+
+// for bind function
+using std::placeholders::_1;
+
+// using namespace std::chrono_literals for ms
+using std::literals::chrono_literals::operator""ms;
+// set controller configure path
+// todo: 20240810 just for test
+constexpr char kControlConfigPath[] =
+    "/home/lifanjie/planning_and_control_study_by_carla/src/control/config/"
+    "controller_conf.pb.txt";
+
 ControlNode::ControlNode() : Node("control"), count_(0) {
-  control::pb::ControllerConf controller_conf;
-  ::common::ReadProtoFromTextFile(
-      "/home/lifanjie/planning_and_control_study_by_carla/src/control/config/"
-      "controller_conf.pb.txt",
-      &controller_conf);
-  std::cout << controller_conf.DebugString() << std::endl;
+  // load controller configuration
+  ::common::ReadProtoFromTextFile(kControlConfigPath, &controller_conf_);
   // std::cout << controller_conf.cf() << std::endl;
   control_command_.acceleration = 0.50;
   has_subscribed_trajectory_ = false;

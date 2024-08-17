@@ -10,6 +10,10 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+# clangd 自动在build目录下生成compile_commands.json文件
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+
 find_package(ament_cmake_auto REQUIRED) 
 ament_auto_find_build_dependencies()
 

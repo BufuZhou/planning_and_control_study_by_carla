@@ -1,7 +1,7 @@
 // Copyright 2016 Open Source Robotics Foundation, Inc.
 #ifndef SRC_CONTROL_INCLUDE_CONTROL_CONTROL_NODE_HPP_
 #define SRC_CONTROL_INCLUDE_CONTROL_CONTROL_NODE_HPP_
-// #include "control_cmd.pb.h"
+
 #include "rclcpp/rclcpp.hpp"
 #include "common_msgs/msg/control_command.hpp"
 #include "memory"
@@ -9,6 +9,7 @@
 #include "common_msgs/msg/pose.hpp"
 #include "control/lat_controller.hpp"
 #include "carla_msgs/msg/carla_ego_vehicle_control.hpp"
+#include "control_protos/controller_conf.pb.h"
 
 namespace control {
 class ControlNode : public rclcpp::Node {
@@ -38,6 +39,8 @@ class ControlNode : public rclcpp::Node {
   carla_msgs::msg::CarlaEgoVehicleControl carla_vehicle_command_;
   bool has_subscribed_trajectory_;
   bool has_subscribed_pose_;
+
+  control::pb::ControllerConf controller_conf_;
 };
 }  // namespace control
 #endif  // SRC_CONTROL_INCLUDE_CONTROL_CONTROL_NODE_HPP_

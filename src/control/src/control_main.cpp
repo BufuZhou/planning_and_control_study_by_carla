@@ -1,4 +1,5 @@
-// Copyright 2016 Open Source Robotics Foundation, Inc.
+// Copyright
+#include <memory>
 #include "control/control_node.hpp"
 
 int main(int argc, char * argv[]) {

@@ -81,5 +81,12 @@
   "C_Cpp.errorSquiggles": "disabled",
   "cpplint.cpplintPath": "/usr/local/bin/cpplint",
   "editor.tabSize": 2,
-  "cmake.sourceDirectory": "/home/lifanjie/planning_and_control_study_by_carla/src/planning"
+  "cmake.sourceDirectory": "/home/lifanjie/planning_and_control_study_by_carla/src/planning",
+  "clangd.path": "/usr/bin/clangd-20", // 设置clangd的路径
+  "clangd.compileFlags": ["-I/path/to/your/include/folder"], // 编译
+  "clangd.arguments": [
+    "--log=verbose",
+    "--header-insertion=never",
+    "--query-driver=/usr/bin/g++*"
+    ]
 }

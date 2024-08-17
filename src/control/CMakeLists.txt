@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(control)
 
-# Default to C++14
+# Default to C++17
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
 endif()
@@ -9,6 +9,10 @@ endif()
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
+
+
+# clangd 自动在build目录下生成compile_commands.json文件
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # find dependencies
 # ros相关的依赖，通过ament_target_dependencies配置
@@ -52,7 +56,8 @@ endif ()
 
 
 # 设置proto生成文件路径
-set(PROTO_OUTPUT_PATH  ${CMAKE_BINARY_DIR}/control_proto_generate)
+set(CONTROL_PROTOS_GENERATE_INCLUDE ${CMAKE_BINARY_DIR})
+set(PROTO_OUTPUT_PATH  ${CMAKE_BINARY_DIR}/control_protos)
 if(IS_DIRECTORY ${PROTO_OUTPUT_PATH})
   message("PROTO_OUTPUT_PATH exist.")
 else()
@@ -60,7 +65,6 @@ else()
   message("PROTO_OUTPUT_PATH generate.")
 endif()
 message("PROTO_OUTPUT_PATH: ${PROTO_OUTPUT_PATH}")
-include_directories(${PROTO_OUTPUT_PATH})
 
 # 设置proto所在目录
 SET(PROTO_FILE_PATH ${CMAKE_SOURCE_DIR}/proto)
@@ -131,10 +135,14 @@ ament_export_dependencies(Eigen3)
 
 target_include_directories( ${PROJECT_NAME}_node PUBLIC
                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-                            $<INSTALL_INTERFACE:include>
+                            $<BUILD_INTERFACE:${CONTROL_PROTOS_GENERATE_INCLUDE}>
                             $<BUILD_INTERFACE:${Protobuf_INCLUDE_DIRS}>
-                            $<BUILD_INTERFACE:${PROTO_OUTPUT_PATH}>>
+
 )
+
+message("Protobuf_INCLUDE_DIRS: ${Protobuf_INCLUDE_DIRS}")
+message("PROTO_OUTPUT_PATH: ${PROTO_OUTPUT_PATH}")
+message("CONTROL_PROTOS_GENERATE_INCLUDE: ${CONTROL_PROTOS_GENERATE_INCLUDE}")
 
 # 读取yaml配置参数
 install(DIRECTORY launch

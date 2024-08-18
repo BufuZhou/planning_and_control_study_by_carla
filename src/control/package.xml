@@ -15,6 +15,7 @@
   <depend>common</depend>
   <buildtool_depend>eigen3_cmake_module</buildtool_depend>
   <build_depend>eigen</build_depend>
+  <build_depend>glog</build_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
   <buildtool_export_depend>eigen3_cmake_module</buildtool_export_depend>

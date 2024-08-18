@@ -21,10 +21,14 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(carla_msgs REQUIRED)
 find_package(common_msgs REQUIRED)
+find_package(common REQUIRED)
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
-find_package(common REQUIRED)
+find_package(Protobuf REQUIRED)
+find_package(glog 0.7.0 REQUIRED)
 
+
+# eigen3
 set(EIGEN3_INCLUDE_DIR "/usr/include/eigen3")
 include_directories(${EIGEN3_INCLUDE_DIR})
 message(${EIGEN3_INCLUDE_DIR})
@@ -32,8 +36,14 @@ if (NOT Eigen3)
   message("Eigen3 not found")
 endif()
 
+# Glog
+if (glog_FOUND)
+    message("glog found")
+else ()
+    message(FATAL_ERROR "Cannot find glog")
+endif ()
+
 # protobuf
-find_package(Protobuf REQUIRED)
 if (PROTOBUF_FOUND)
     message("protobuf found")
 else ()
@@ -137,8 +147,10 @@ target_include_directories( ${PROJECT_NAME}_node PUBLIC
                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
                             $<BUILD_INTERFACE:${CONTROL_PROTOS_GENERATE_INCLUDE}>
                             $<BUILD_INTERFACE:${Protobuf_INCLUDE_DIRS}>
+                            $<BUILD_INTERFACE:${GLOG_INCLUDE_DIRS}>)
+target_link_libraries(${PROJECT_NAME}_node
+                      glog::glog)
 
-)
 
 message("Protobuf_INCLUDE_DIRS: ${Protobuf_INCLUDE_DIRS}")
 message("PROTO_OUTPUT_PATH: ${PROTO_OUTPUT_PATH}")

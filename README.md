@@ -25,6 +25,14 @@ rosdep update
 rosdep install --from-paths src --ignore-src -r
 colcon build
 
+## glog
+intstall:
+sudo apt-get install libgoogle-glog-dev
+
+version:
+cd /usr/local/lib/cmake/glog
+gedit glog-config-version.cmake
+
 ## protobuf libprotoc 3.6.1
 sudo apt-get install protobuf-compiler
 sudo apt-get install libprotobuf-dev
@@ -45,6 +53,7 @@ https://github.com/ros2/eigen3_cmake_module
 sudo apt install clang-format
 sudo pip3 install cpplint
 
+clangd
 
 # ROS tutorials
 http://dev.ros2.fishros.com/doc/Tutorials/Workspace/Creating-A-Workspace.html

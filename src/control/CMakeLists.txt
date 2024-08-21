@@ -123,11 +123,6 @@ add_executable(${PROJECT_NAME}_node
 src/control_main.cpp
 src/control_node.cpp
 src/lat_controller.cpp
-src/digital_filter_coefficients.cpp
-src/digital_filter.cpp
-src/mean_filter.cpp
-src/interpolation_1d.cpp
-src/trajectory_analyzer.cpp
 ${PROTO_GENERATE_SRC}
 )
 

@@ -30,8 +30,14 @@ intstall:
 sudo apt-get install libgoogle-glog-dev
 
 version:
-cd /usr/local/lib/cmake/glog
-gedit glog-config-version.cmake
+ apt show libgoogle-glog-dev
+
+
+## gflag
+sudo apt install libgflags-dev
+
+version:
+apt show libgflags-dev
 
 ## protobuf libprotoc 3.6.1
 sudo apt-get install protobuf-compiler
@@ -86,6 +92,11 @@ ros2 launch carla_ros_bridge carla_ros_bridge.launch.py
 ros2 launch carla_ros_bridge carla_ros_bridge_with_example_ego_vehicle.launch.py
 ros2 launch carla_ros_bridge carla_ros_bridge_with_example_ego_vehicle.launch.py role_name:="ego_vehicle" vehicle_filter:="vehicle.lincoln.mkz_2017" spawn_point:="49.91,-7.778184,0.28,0,0,0"  town:="town03"
 ros2 launch carla_ros_bridge carla_ros_bridge_with_example_ego_vehicle.launch.py  town:="town03"
+
+##
+cd ~/planning_and_control_study_by_carla 
+source install/setup.bash
+ros2 launch control control_with_planning.launch.py 
 
 ### spawn_point
 ~/carla-ros-bridge/src/ros-bridge/carla_spawn_objects/src/carla_spawn_objects/carla_spawn_objects.py

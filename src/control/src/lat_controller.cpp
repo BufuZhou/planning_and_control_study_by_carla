@@ -7,7 +7,7 @@
 #include <iostream>
 
 #include "common_msgs/msg/pose.hpp"
-#include "control/digital_filter_coefficients.hpp"
+// #include "control/digital_filter_coefficients.hpp"
 #include "rclcpp/logging.hpp"
 
 namespace control {
@@ -91,8 +91,8 @@ void LatController::ComputeControlCommand(
   std::cout << "lateral controller start......" << std::endl;
   auto target_tracking_trajectory = *planning_published_trajectory;
 
-  trajectory_analyzer_ =
-      std::move(TrajectoryAnalyzer(&target_tracking_trajectory));
+  // trajectory_analyzer_ =
+  //     std::move(TrajectoryAnalyzer(&target_tracking_trajectory));
   LateralControlDebug debug = cmd->simple_lat_debug;
 
 

@@ -13,7 +13,7 @@
 #include "control/mean_filter.hpp"
 #include "control/interpolation_1d.hpp"
 #include "common_msgs/msg/pose.hpp"
-#include "control/trajectory_analyzer.hpp"
+// #include "control/trajectory_analyzer.hpp"
 
 namespace control {
 
@@ -113,7 +113,7 @@ class LatController {
   std::unique_ptr<common::Interpolation1D> heading_error_interpolation_;
 
   // a proxy to analyze the planning trajectory
-  TrajectoryAnalyzer trajectory_analyzer_;
+  // TrajectoryAnalyzer trajectory_analyzer_;
 };
 }  // namespace control
 

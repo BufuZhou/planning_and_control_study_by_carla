@@ -28,7 +28,7 @@ PlanningNode::PlanningNode() : Node("planning") , count_(0) {
 
 bool PlanningNode::loadRoadMap() {
   // 读取参考线路径
-  std::cout << roadmap_path_ << std::endl;
+  // std::cout << roadmap_path_ << std::endl;
   std::ifstream infile;
   infile.open(roadmap_path_);  // 将文件流对象与文件连接起来
   if (!infile.is_open()) {
@@ -45,7 +45,7 @@ bool PlanningNode::loadRoadMap() {
     word >> y;
     double pt_x = std::atof(x.c_str());
     double pt_y = std::atof(y.c_str());
-    // std::cout << pt_x << " " << pt_y << std::endl;
+    std::cout << pt_x << " " << pt_y << std::endl;
     xy_points.push_back(std::make_pair(pt_x, pt_y));
   }
   infile.close();
@@ -54,21 +54,27 @@ bool PlanningNode::loadRoadMap() {
   // 根据离散的点组成的路径，生成路网航向角,累计距离，曲率，曲率的导数
   computePathProfile(xy_points, &headings, &accumulated_s, &kappas, &dkappas);
 
-  // for (size_t i = 0; i < headings.size(); i++) {
-  //   common_msgs::msg::TrajectoryPoint trajectory_point;
-  //   trajectory_point.x = xy_points[i].first;
-  //   trajectory_point.y = xy_points[i].second;
-  //   trajectory_point.v = target_velocity_;
-  //   trajectory_point.a = 0.0;
-  //   trajectory_point.theta = headings[i];
-  //   trajectory_point.kappa = kappas[i];
-  //   std::cout << trajectory_point.x << " " << trajectory_point.y << " "
-  //             << trajectory_point.v << " " << trajectory_point.theta << " "
-  //             << trajectory_point.kappa << std::endl;
-  //   trajectory_.trajectory.push_back(trajectory_point);
-  // }
-  // // trajectory_
-  // trajectory_publisher_->publish(trajectory_);
+  for (size_t i = 0; i < headings.size(); i++) {
+    common_msgs::msg::TrajectoryPoint trajectory_point;
+    trajectory_point.path_point.x = xy_points[i].first;
+    trajectory_point.path_point.y = xy_points[i].second;
+    trajectory_point.path_point.z = 0.0;
+    trajectory_point.path_point.theta = headings[i];
+    trajectory_point.path_point.kappa = kappas[i];
+    trajectory_point.path_point.s = 0.0;
+    trajectory_point.path_point.dkappa = 0.0;
+    trajectory_point.path_point.ddkappa = 0.0;
+    trajectory_point.path_point.lane_id = "none";
+    trajectory_point.v = target_velocity_;
+    trajectory_point.a = 0.0;
+    trajectory_point.relative_time = 0.0;
+    trajectory_.trajectory.push_back(trajectory_point);
+  }
+  // trajectory_
+  // trajectory_.header.stamp = this->get_clock()->now();
+  // trajectory_.header.frame_id = "none";
+
+  trajectory_publisher_->publish(trajectory_);
 
   return true;
 }

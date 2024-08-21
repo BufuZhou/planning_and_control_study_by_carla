@@ -28,17 +28,14 @@ ControlNode::ControlNode() : Node("control"), count_(0) {
   has_subscribed_trajectory_ = false;
   has_subscribed_pose_ = false;
   // get parameter
-  double mass_fl = 400.0;
-  this->declare_parameter<double>("mass_fl", 0.1);
-  this->get_parameter("mass_fl", mass_fl);
-  RCLCPP_INFO(this->get_logger(), "My parameter value is: %lf", mass_fl);
-  RCLCPP_INFO(this->get_logger(), "My parameter value is: %lf", mass_fl);
+  RCLCPP_INFO(this->get_logger(), "control node running.");
+
 
   // get trajectory message
-  trajectory_subscriber_ =
-      this->create_subscription<common_msgs::msg::Trajectory>(
-          "/planning/trajectory", 10,
-          std::bind(&ControlNode::get_trajectory, this, _1));
+  // trajectory_subscriber_ =
+  //     this->create_subscription<common_msgs::msg::Trajectory>(
+  //         "/planning/trajectory", 10,
+  //         std::bind(&ControlNode::get_trajectory, this, _1));
 
   // get pose from localizaion
   localization_subscriber_ = this->create_subscription<common_msgs::msg::Pose>(
@@ -67,15 +64,11 @@ void ControlNode::get_trajectory(common_msgs::msg::Trajectory::SharedPtr msg) {
 
 void ControlNode::get_localization(common_msgs::msg::Pose::SharedPtr msg) {
   has_subscribed_pose_ = true;
-  // std::cout << "get pose......." << std::endl;
   pose_.x = msg->x;
   pose_.y = msg->y;
   pose_.vel_x = msg->vel_x;
   pose_.vel_y = msg->vel_y;
   pose_.yaw = msg->yaw;
-  // std::cout << "pose_.x = " << pose_.x << " "
-  //           << "pose_.y = " << pose_.y << " "
-  //           << "pose_.z = " << pose_.z << " " << std::endl;
 }
 
 void ControlNode::compute_lateral_command() {

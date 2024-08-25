@@ -83,20 +83,24 @@ sh ~/CARLA_0.9.13/CarlaUE4.sh
 colcon build --packages-select vehicle control
 
 ## carla-ros-bridge
+carla ros中存在bug，需要进行一定修改
+（1）不支持高版本的carla，需要修改version
+（2）ros指令无法指定出生点以及设置车辆类型
+目前carla中获取轨迹有两种方法：
+（1）通过get_route，利用carla内部规划的路径；
+（2）通过carla-ros-bridge，运行内置的自动驾驶规划模式或者手动操作，获得路径。路径保存在运行节点的当前路径
+（3）通过（2）中获得的路径名称为actual_driving_path_of_vehicle.txt，替换planning中data文件下txt内容
+
+###
 cd ~/carla-ros-bridge/
 source ./install/setup.bash
 or
 source ~/carla-ros-bridge/install/setup.bash
 
-ros2 launch carla_ros_bridge carla_ros_bridge.launch.py
-ros2 launch carla_ros_bridge carla_ros_bridge_with_example_ego_vehicle.launch.py
+
 ros2 launch carla_ros_bridge carla_ros_bridge_with_example_ego_vehicle.launch.py role_name:="ego_vehicle" vehicle_filter:="vehicle.lincoln.mkz_2017" spawn_point:="49.91,-7.778184,0.28,0,0,0"  town:="town03"
 ros2 launch carla_ros_bridge carla_ros_bridge_with_example_ego_vehicle.launch.py  town:="town03"
 
-##
-cd ~/planning_and_control_study_by_carla 
-source install/setup.bash
-ros2 launch control control_with_planning.launch.py 
 
 ### spawn_point
 ~/carla-ros-bridge/src/ros-bridge/carla_spawn_objects/src/carla_spawn_objects/carla_spawn_objects.py
@@ -112,6 +116,13 @@ Yaw的位置不一样，需要进行调整
 ### ego_vehicle
 ~/lifanjie/carla-ros-bridge/src/ros-bridge/carla_spawn_objects/config/objects.json
 "type": "vehicle.lincoln.mkz_2017",
+
+
+
+##
+cd ~/planning_and_control_study_by_carla 
+source install/setup.bash
+ros2 launch control control_with_planning.launch.py 
 
 ### modify parameter need rebuild 
 

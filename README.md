@@ -105,7 +105,6 @@ source ~/carla-ros-bridge/install/setup.bash
 
 
 ros2 launch carla_ros_bridge carla_ros_bridge_with_example_ego_vehicle.launch.py role_name:="ego_vehicle" vehicle_filter:="vehicle.lincoln.mkz_2017" spawn_point:="49.91,-7.778184,0.28,0,0,0"  town:="town03"
-ros2 launch carla_ros_bridge carla_ros_bridge_with_example_ego_vehicle.launch.py  town:="town03"
 
 
 ### spawn_point

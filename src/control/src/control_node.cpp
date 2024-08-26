@@ -32,10 +32,10 @@ ControlNode::ControlNode() : Node("control"), count_(0) {
 
 
   // get trajectory message
-  // trajectory_subscriber_ =
-  //     this->create_subscription<common_msgs::msg::Trajectory>(
-  //         "/planning/trajectory", 10,
-  //         std::bind(&ControlNode::get_trajectory, this, _1));
+  trajectory_subscriber_ =
+      this->create_subscription<common_msgs::msg::Trajectory>(
+          "/planning/trajectory", 10,
+          std::bind(&ControlNode::get_trajectory, this, _1));
 
   // get pose from localizaion
   localization_subscriber_ = this->create_subscription<common_msgs::msg::Pose>(
@@ -84,12 +84,12 @@ void ControlNode::compute_lateral_command() {
 
   // calculate steering angle by lateral controller
   LatController lateral_controller;
-  ControlCommand cmd;
-  lateral_controller.ComputeControlCommand(&pose_, &trajectory_, &cmd);
+  // ControlCommand cmd;
+  lateral_controller.ComputeControlCommand(&pose_, &trajectory_);
   double front_steering_angle = lateral_controller.GetSteeringAngleCommand();
-  RCLCPP_INFO(this->get_logger(), "front_steering_angle: %lf",
-              front_steering_angle);
-  front_steering_angle = fmin(fmax(front_steering_angle, -70), 70);
+  // RCLCPP_INFO(this->get_logger(), "front_steering_angle: %lf",
+  //             front_steering_angle);
+  // front_steering_angle = fmin(fmax(front_steering_angle, -70), 70);
   control_command_.steering = front_steering_angle * 180 / 3.14156 / 70;
 }
 

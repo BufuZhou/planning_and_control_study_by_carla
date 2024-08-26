@@ -12,12 +12,10 @@
 
 namespace control {
 
-using Matrix = Eigen::MatrixXd;
-#define PI 3.141592653589793
-
 LatController::LatController() : name_("LQR-based Lateral Controller") {
   std::cout << "lateral controller: " << name_ << std::endl;
   std::cout << "Using " << name_ << std::endl;
+  LoadControlConfig();
 }
 
 LatController::~LatController() { }
@@ -45,61 +43,50 @@ void LatController::LoadControlConfig() {
   lqr_eps_ = 0.01;
   lqr_max_iteration_ = 150;
 
-}
-
-bool LatController::Init() {
-  const int matrix_size = basic_state_size_;
-  matrix_a_ = Eigen::MatrixXd::Zero(basic_state_size_, basic_state_size_);
-  matrix_ad_ = Eigen::MatrixXd::Zero(basic_state_size_, basic_state_size_);
-  matrix_adc_ = Eigen::MatrixXd::Zero(basic_state_size_, basic_state_size_);
-
+  // 系统矩阵A和离散后的矩阵A
+  matrix_a_ = Eigen::MatrixXd::Zero(4, 4);
+  matrix_ad_ = Eigen::MatrixXd::Zero(4, 4);
+  // 系统矩阵A中的常量项
   matrix_a_(0, 1) = 1.0;
   matrix_a_(1, 2) = (cf_ + cr_) / mass_;
   matrix_a_(2, 3) = 1.0;
   matrix_a_(3, 2) = (lf_ * cf_ - lr_ * cr_) / iz_;
 
-  matrix_a_coeff_ = Eigen::MatrixXd::Zero(basic_state_size_, basic_state_size_);
-  matrix_a_coeff_(1, 1) = -(cf_ + cr_) / mass_;
-  matrix_a_coeff_(1, 3) = (lr_ * cr_ - lf_ * cf_) / mass_;
-  matrix_a_coeff_(3, 1) = (lr_ * cr_ - lf_ * cf_) / iz_;
-  matrix_a_coeff_(3, 3) = -(lf_ * lf_ * cf_ + lr_ * lr_ * cr_) / iz_;
-
-  matrix_b_ = Eigen::MatrixXd::Zero(basic_state_size_, 1);
-  matrix_bd_ = Eigen::MatrixXd::Zero(basic_state_size_, 1);
-  matrix_bdc_ = Eigen::MatrixXd::Zero(basic_state_size_, 1);
+  // 控制矩阵B和离散后的控制矩阵B
+  matrix_b_ = Eigen::MatrixXd::Zero(4, 1);
+  matrix_bd_ = Eigen::MatrixXd::Zero(4, 1);
   matrix_b_(1, 0) = cf_ / mass_;
   matrix_b_(3, 0) = lf_ * cf_ / iz_;
   matrix_bd_ = matrix_b_ * ts_;
 
-  // update state matrix
-  matrix_state_ = Eigen::MatrixXd::Zero(basic_state_size_, 1);
-  matrix_k_ = Eigen::MatrixXd::Zero(1, matrix_size);
+  // 状态矩阵
+  matrix_state_ = Eigen::MatrixXd::Zero(4, 1);
+  // 反馈矩阵
+  matrix_k_ = Eigen::MatrixXd::Zero(1, 4);
+  // 控制权重矩阵
   matrix_r_ = Eigen::MatrixXd::Identity(1, 1);
-  matrix_q_ = Matrix::Zero(matrix_size, matrix_size);
-  matrix_q_ << 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
-      0.0, 0.0, 0.0;
-  matrix_q_updated_ = matrix_q_;
-  return true;
+  // 状态误差权重矩阵
+  matrix_q_ = Eigen::MatrixXd::Zero(4, 4);
+  matrix_q_(0, 0) = 0.5;
+  matrix_q_(2, 2) = 1.0;
 }
 
 std::string LatController::Name() const { return name_; }
 
 void LatController::ComputeControlCommand(
     const common_msgs::msg::Pose *localization,
-    const common_msgs::msg::Trajectory *planning_published_trajectory,
-    ControlCommand *cmd) {
+    const common_msgs::msg::Trajectory *planning_published_trajectory) {
   std::cout << "lateral controller start......" << std::endl;
   auto target_tracking_trajectory = *planning_published_trajectory;
 
   // trajectory_analyzer_ =
   //     std::move(TrajectoryAnalyzer(&target_tracking_trajectory));
-  LateralControlDebug debug = cmd->simple_lat_debug;
+  // LateralControlDebug debug = cmd->simple_lat_debug;
 
 
 
   // the trajectory point closest to the actual position of the vehicle
   common_msgs::msg::TrajectoryPoint target_point;
-  LoadControlConfig();
 
   // std::cout << planning_trajectory->trajectory.front().x << std::endl;
   ComputeLateralErrors(localization->x, localization->y, localization->yaw,
@@ -114,101 +101,97 @@ void LatController::ComputeControlCommand(
   // feedback = - K * state
   steer_angle_feedback_ = -(matrix_k_ * matrix_state_)(0, 0);
   computeFeedforward(vx);
-  steering_angle_command_ = steer_angle_feedback_ + steering_angle_feedforward_;
+  steering_angle_command_ = steer_angle_feedback_;
   std::cout << "steering angle command: " << steering_angle_command_
             << std::endl;
+  // 最大前轮转角为2deg
+  const double max_steer_angle = 2.0 * M_PI / 180.0;
+  steering_angle_command_ =
+      std::clamp(steering_angle_command_, -max_steer_angle, max_steer_angle);
 }
 
 TrajectoryPoint LatController::QueryNearestPointByPosition(
     const double x, const double y,
     const common_msgs::msg::Trajectory *planning_trajectory) {
-  // std::cout << "start to query target point" << std::endl;
-  // std::cout << planning_trajectory->trajectory[0].x << std::endl;
+
   auto trajectory = planning_trajectory->trajectory;
+  auto func_distance_square = [](const common_msgs::msg::TrajectoryPoint
+  &point,
+                                 const double x, const double y) {
+    double dx = point.path_point.x - x;
+    double dy = point.path_point.y - y;
+    return dx * dx + dy * dy;
+  };
 
-  // auto func_distance_square = [](const common_msgs::msg::TrajectoryPoint
-  // &point,
-  //                                const double x, const double y) {
-  //   double dx = point.x - x;
-  //   double dy = point.y - y;
-  //   return dx * dx + dy * dy;
-  // };
-
-  // double d_min =
-  //     func_distance_square(trajectory.front(), x, y);
+  double d_min =
+      func_distance_square(trajectory.front(), x, y);
   size_t index_min = 0;
 
-  // for (size_t i = 1; i < trajectory.size(); ++i) {
-  //   double d_temp = func_distance_square(trajectory[i], x, y);
-  //   if (d_temp < d_min) {
-  //     d_min = d_temp;
-  //     index_min = i;
-  //   }
-  // }
-  // std::cout << "nearest point........." << std::endl;
-  // std::cout << index_min << std::endl;
-  // std::cout << trajectory[index_min].x << std::endl;
-  // std::cout << trajectory[index_min].y << std::endl;
+  for (size_t i = 1; i < trajectory.size(); ++i) {
+    double d_temp = func_distance_square(trajectory[i], x, y);
+    if (d_temp < d_min) {
+      d_min = d_temp;
+      index_min = i;
+    }
+  }
+  std::cout << "nearest point........." << std::endl;
+  std::cout << index_min << std::endl;
+  std::cout << trajectory[index_min].path_point.x << std::endl;
+  std::cout << trajectory[index_min].path_point.y << std::endl;
   return trajectory[index_min];
 }
 
 void LatController::ComputeLateralErrors(
     const double x, const double y, const double theta,
     const common_msgs::msg::Trajectory *trajectory) {
-  // std::cout << "start to compute lateral error..." << std::endl;
   // the trajectory point closest to the actual position of the vehicle
-  common_msgs::msg::TrajectoryPoint target_point;
+  common_msgs::msg::TrajectoryPoint target_trajectory_point;
 
-  // target_point = QueryNearestPointByPosition(x, y, trajectory);
-  // double dx = target_point.x - x;
-  // double dy = target_point.y - y;
-  // std::cout << "reference heading: " << target_point.theta
-  //           << std::endl;
-  // std::cout << "ego vehicle heading: " << theta << std::endl;
+  target_trajectory_point = QueryNearestPointByPosition(x, y, trajectory);
+  double dx = x - target_trajectory_point.path_point.x;
+  double dy = y - target_trajectory_point.path_point.y;
+  std::cout << "reference heading: " << target_trajectory_point.path_point.theta
+            << std::endl;
+  std::cout << "ego vehicle heading: " << theta << std::endl;
 
-  // double cos_ego_heading = std::cos(target_point.theta);
-  // double sin_ego_heading = std::sin(target_point.theta);
-  // lateral_error_ = dy * cos_ego_heading - dx * sin_ego_heading;
-  // heading_error_ = target_point.theta - theta;
+  const double cos_target_heading =
+      std::cos(target_trajectory_point.path_point.theta);
+  const double sin_target_heading =
+      std::sin(target_trajectory_point.path_point.theta);
+  lateral_error_ = cos_target_heading * dy - sin_target_heading * dx;
 
-  // std::cout << "lateral error" << lateral_error_ << std::endl;
-  // std::cout << "heading error" << heading_error_ << std::endl;
+  // double cos_ego_heading = std::cos(theta);
+  // double sin_ego_heading = std::sin(theta);
+  // lateral_error_ = (dx / sin_ego_heading - dy / cos_ego_heading) * 0.5;
+
+  heading_error_ = theta - target_trajectory_point.path_point.theta;
+
+  std::cout << "lateral error" << lateral_error_ << std::endl;
+  std::cout << "heading error" << heading_error_ << std::endl;
 
   // todo: how to calculate lateral_error_dot and heading_error_dot
-  // lateral_error_dot_ = linear_v * std::sin(heading_error_);
-  // heading_error_dot_ = angular_v - target_trajectory_point_.kappa;
-  lateral_error_dot_ = 0.0;
-  heading_error_ = 0.0;
+  lateral_error_dot_ = lateral_error_ / 0.02;
+  heading_error_dot_ = heading_error_ / 0.02;
 }
 
 void LatController::updateStateSpaceModel(double vx) {
   vx = std::max(std::abs(vx), 0.01);
-  matrix_a_ = Eigen::MatrixXd::Zero(4, 4);
-  matrix_a_(0, 1) = 1.0;
-  matrix_a_(1, 1) = -(cf_ + cr_) / mass_ / vx;
-  matrix_a_(1, 2) = (cf_ + cr_) / mass_;
-  matrix_a_(1, 3) = (lr_ * cr_ - lf_ * cf_) / mass_ / vx;
-  matrix_a_(2, 3) = 1.0;
-  matrix_a_(3, 1) = (lr_ * cr_ - lf_ * cf_) / iz_ / vx;
-  matrix_a_(3, 2) = (lf_ * cf_ - lr_ * cr_) / iz_;
-  matrix_a_(3, 3) = -(lf_ * lf_ * cf_ + lr_ * lr_ * cr_) / iz_ / vx;
 
-  matrix_b_ = Eigen::MatrixXd::Zero(4, 1);
-  matrix_b_(1, 0) = cf_ / mass_;
-  matrix_b_(3, 0) = lf_ * cf_ / iz_;
+  // 系统矩阵A中与车速相关项，
+  matrix_a_(1, 1) = -(cf_ + cr_) / mass_ / vx;
+  matrix_a_(1, 3) = (lr_ * cr_ - lf_ * cf_) / mass_ / vx;
+  matrix_a_(3, 1) = (lr_ * cr_ - lf_ * cf_) / iz_ / vx;
+  matrix_a_(3, 3) = -(lf_ * lf_ * cf_ + lr_ * lr_ * cr_) / iz_ / vx;
 
   // discretization of State Space model
   Eigen::MatrixXd matrix_i = Eigen::MatrixXd::Identity(4, 4);
-  matrix_ad_ = (matrix_i + 0.5 * ts_ * matrix_a_) *
-               (matrix_i - 0.5 * ts_ * matrix_a_).inverse();
-  matrix_bd_ = matrix_b_ * ts_;
-
+  matrix_ad_ = (matrix_i - ts_ * 0.5 * matrix_a_).inverse() *
+               (matrix_i + ts_ * 0.5 * matrix_a_);
   // update state matrix
-  matrix_state_ = Eigen::MatrixXd::Zero(4, 1);
   matrix_state_(0, 0) = lateral_error_;
-  matrix_state_(1, 0) = 0.1;
+  matrix_state_(1, 0) = lateral_error_dot_;
   matrix_state_(2, 0) = heading_error_;
-  matrix_state_(3, 0) = 0.1;
+  matrix_state_(3, 0) = heading_error_dot_;
 }
 
 void LatController::solveLqrProblem(
@@ -248,13 +231,6 @@ void LatController::solveLqrProblem(
   }
   *ptr_K = (R + BT * P * B).inverse() * BT * P * A;
 }
-
-
-// void LatController::UpdateState(LateralControlDebug *debug) {
-  
-// }
-
-
 
 void LatController::computeFeedforward(double vx) {
   // cf_ is the sum of lateral stiffness of two front wheels

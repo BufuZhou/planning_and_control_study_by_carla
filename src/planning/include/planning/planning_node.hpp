@@ -38,14 +38,14 @@ class TrajectoryPoint {
 class PlanningNode : public rclcpp::Node {
  public:
   PlanningNode();
+  void trajectory_pub();
+
+ private:
   bool loadRoadMap();
   bool computePathProfile(
       const std::vector<std::pair<double, double>>& xy_points,
       std::vector<double>* headings, std::vector<double>* accumulated_s,
       std::vector<double>* kappas, std::vector<double>* dkappas);
-
- private:
-  void getWayPoints();
   std::string roadmap_path_;
   double target_velocity_;
   std::vector<TrajectoryPoint> trajectory_points_;

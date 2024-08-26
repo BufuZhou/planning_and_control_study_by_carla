@@ -30,8 +30,7 @@ class LatController {
   double GetSteeringAngleCommand();
 
   void ComputeControlCommand(const Pose *localization,
-                             const Trajectory *planning_published_trajectory,
-                             ControlCommand *cmd);
+                             const Trajectory *planning_published_trajectory);
 
  private:
   // lateral controller name
@@ -57,7 +56,6 @@ class LatController {
                        Eigen::MatrixXd *ptr_K);
   // compute feedforward steering angle
   void computeFeedforward(double vx);
-  bool Init();
   std::string Name() const;
 
   double ts_ = 0.0;         // control time interval, seconds
@@ -74,18 +72,12 @@ class LatController {
   double lqr_eps_;             // iteration maximum error
   double lqr_max_iteration_;   // maximum number of iterations
   Eigen::MatrixXd matrix_a_;   // vehicle state matrix
-  Eigen::MatrixXd matrix_ad_;  // vehicle state matrix (discrete-time
-  Eigen::MatrixXd matrix_adc_;
-  Eigen::MatrixXd matrix_a_coeff_;
-
+  Eigen::MatrixXd matrix_ad_;  // vehicle state matrix (discrete-time)
   Eigen::MatrixXd matrix_b_;   // control matrix
   Eigen::MatrixXd matrix_bd_;  // control matrix (discrete-time)
-  Eigen::MatrixXd matrix_bdc_;
   Eigen::MatrixXd matrix_k_;   // gain matrix
   Eigen::MatrixXd matrix_r_;   // control weighting matrix
   Eigen::MatrixXd matrix_q_;   // state weighting matrix
-  Eigen::MatrixXd matrix_q_updated_;
-  Eigen::MatrixXd matrix_a_coeff;  // vehicle state matrix coefficients
   Eigen::MatrixXd matrix_state_;   // 4 by 1 matrix; state matrix
   // control state
   double lateral_error_;
@@ -108,7 +100,6 @@ class LatController {
   common::MeanFilter distance_error_filter_;
   common::MeanFilter heading_error_filter_;
   uint8_t mean_filter_window_size_;
-  int basic_state_size_;
   std::unique_ptr<common::Interpolation1D> distance_error_interpolation_;
   std::unique_ptr<common::Interpolation1D> heading_error_interpolation_;
 

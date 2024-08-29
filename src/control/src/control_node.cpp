@@ -25,7 +25,7 @@ ControlNode::ControlNode() : Node("control"), count_(0) {
   // load controller configuration
   ::common::ReadProtoFromTextFile(kControlConfigPath, &controller_conf_);
   // std::cout << controller_conf.cf() << std::endl;
-  control_command_.acceleration = 0.50;
+  control_command_.acceleration = 0.43;
   has_subscribed_trajectory_ = false;
   has_subscribed_pose_ = false;
   // get parameter
@@ -84,10 +84,9 @@ void ControlNode::compute_lateral_command() {
   }
 
   // calculate steering angle by lateral controller
-  LatController lateral_controller;
   // ControlCommand cmd;
-  lateral_controller.ComputeControlCommand(&pose_, &trajectory_);
-  double front_steering_angle = lateral_controller.GetSteeringAngleCommand();
+  lateral_controller_.ComputeControlCommand(&pose_, &trajectory_);
+  double front_steering_angle = lateral_controller_.GetSteeringAngleCommand();
   // RCLCPP_INFO(this->get_logger(), "front_steering_angle: %lf",
   //             front_steering_angle);
   // front_steering_angle = fmin(fmax(front_steering_angle, -70), 70);
@@ -98,7 +97,7 @@ void ControlNode::send_vehicle_command() {
   std::cout << "send vehicle command to carla" << std::endl;
   carla_vehicle_command_.header.stamp = this->now();
   // control_cmd_.header.frame_id
-  carla_vehicle_command_.steer = control_command_.steering;
+  carla_vehicle_command_.steer = -control_command_.steering;
   carla_vehicle_command_.throttle = control_command_.acceleration;
   carla_vehicle_command_.gear = 1;
   carla_vehicle_command_.reverse = false;

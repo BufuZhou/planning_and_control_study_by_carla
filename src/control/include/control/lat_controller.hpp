@@ -81,8 +81,10 @@ class LatController {
   Eigen::MatrixXd matrix_state_;   // 4 by 1 matrix; state matrix
   // control state
   double lateral_error_;
+  double last_lateral_error_;
   double lateral_error_dot_;
   double heading_error_;
+  double last_heading_erro_;
   double heading_error_dot_;
 
   // feedback steering angle

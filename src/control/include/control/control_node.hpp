@@ -40,6 +40,8 @@ class ControlNode : public rclcpp::Node {
   bool has_subscribed_trajectory_;
   bool has_subscribed_pose_;
 
+  LatController lateral_controller_;
+
   control::pb::ControllerConf controller_conf_;
 };
 }  // namespace control

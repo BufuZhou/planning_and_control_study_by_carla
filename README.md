@@ -35,11 +35,17 @@ sudo apt install libeigen3-dev
 
 查看版本
 pkg-config --modversion eigen3
+apt show libeigen3-dev
+
 
 教程：
 https://eigen.tuxfamily.org/index.php?title=Main_Page
 
 https://github.com/ros2/eigen3_cmake_module
+
+## tbb parallel 
+sudo apt install libtbb-dev
+
 
 # code style (C++ google)
 sudo apt install clang-format

@@ -41,7 +41,7 @@ void LatController::LoadControlConfig() {
   min_speed_protection_ = 0.1;
   // lqr solver paramters
   lqr_eps_ = 0.01;
-  lqr_max_iteration_ = 150;
+  lqr_max_iteration_ = 350;
 
   // 系统矩阵A和离散后的矩阵A
   matrix_a_ = Eigen::MatrixXd::Zero(4, 4);
@@ -67,8 +67,11 @@ void LatController::LoadControlConfig() {
   matrix_r_ = Eigen::MatrixXd::Identity(1, 1);
   // 状态误差权重矩阵
   matrix_q_ = Eigen::MatrixXd::Zero(4, 4);
-  matrix_q_(0, 0) = 0.5;
+  matrix_q_(0, 0) = 0.05;
   matrix_q_(2, 2) = 1.0;
+
+  last_lateral_error_ = 0.0;
+  last_heading_erro_ = 0.0;
 }
 
 std::string LatController::Name() const { return name_; }
@@ -93,8 +96,12 @@ void LatController::ComputeControlCommand(
                        planning_published_trajectory);
 
   // Calculate the speed of the vehicle along the vehicle's x-axis
-  double vx = localization->vel_y * std::cos(localization->yaw) +
-              localization->vel_x * std::sin(localization->yaw);
+  // double vx = localization->vel_y * std::cos(localization->yaw) +
+  //             localization->vel_x * std::sin(localization->yaw);
+
+  double vx = std::sqrt(localization->vel_x * localization->vel_x +
+                        localization->vel_y * localization->vel_y);
+  std::cout << "vx = " << vx << std::endl;
   updateStateSpaceModel(vx);
   solveLqrProblem(matrix_ad_, matrix_bd_, matrix_q_, matrix_r_, lqr_eps_,
                   lqr_max_iteration_, &matrix_k_);
@@ -105,7 +112,7 @@ void LatController::ComputeControlCommand(
   std::cout << "steering angle command: " << steering_angle_command_
             << std::endl;
   // 最大前轮转角为2deg
-  const double max_steer_angle = 2.0 * M_PI / 180.0;
+  const double max_steer_angle = 30.0 * M_PI / 180.0;
   steering_angle_command_ =
       std::clamp(steering_angle_command_, -max_steer_angle, max_steer_angle);
 }
@@ -136,8 +143,7 @@ TrajectoryPoint LatController::QueryNearestPointByPosition(
   }
   std::cout << "nearest point........." << std::endl;
   std::cout << index_min << std::endl;
-  std::cout << trajectory[index_min].path_point.x << std::endl;
-  std::cout << trajectory[index_min].path_point.y << std::endl;
+
   return trajectory[index_min];
 }
 
@@ -145,34 +151,39 @@ void LatController::ComputeLateralErrors(
     const double x, const double y, const double theta,
     const common_msgs::msg::Trajectory *trajectory) {
   // the trajectory point closest to the actual position of the vehicle
-  common_msgs::msg::TrajectoryPoint target_trajectory_point;
+  common_msgs::msg::TrajectoryPoint target_point;
 
-  target_trajectory_point = QueryNearestPointByPosition(x, y, trajectory);
-  double dx = x - target_trajectory_point.path_point.x;
-  double dy = y - target_trajectory_point.path_point.y;
-  std::cout << "reference heading: " << target_trajectory_point.path_point.theta
-            << std::endl;
-  std::cout << "ego vehicle heading: " << theta << std::endl;
+  target_point = QueryNearestPointByPosition(x, y, trajectory);
+  double dx = x - target_point.path_point.x;
+  double dy = y - target_point.path_point.y;
+  std::cout << "target point x: " << target_point.path_point.x << ", "
+            << "target point y: " << target_point.path_point.y << std::endl;
+  std::cout << "ego vehicle point x: " << x << ", "
+            << "ego vehicle point y: " << y << std::endl;
+  std::cout << "target heading: " << target_point.path_point.theta << ", "
+            << "ego vehicle heading: " << theta << std::endl;
 
   const double cos_target_heading =
-      std::cos(target_trajectory_point.path_point.theta);
+      std::cos(target_point.path_point.theta);
   const double sin_target_heading =
-      std::sin(target_trajectory_point.path_point.theta);
+      std::sin(target_point.path_point.theta);
   lateral_error_ = cos_target_heading * dy - sin_target_heading * dx;
 
   // double cos_ego_heading = std::cos(theta);
   // double sin_ego_heading = std::sin(theta);
   // lateral_error_ = (dx / sin_ego_heading - dy / cos_ego_heading) * 0.5;
 
-  heading_error_ = theta - target_trajectory_point.path_point.theta;
+  heading_error_ = theta - target_point.path_point.theta;
 
-  std::cout << "lateral error" << lateral_error_ << std::endl;
-  std::cout << "heading error" << heading_error_ << std::endl;
+  std::cout << "lateral error: " << lateral_error_ << ", "
+            << "heading error: " << heading_error_ << std::endl;
 
   // todo: how to calculate lateral_error_dot and heading_error_dot
-  lateral_error_dot_ = lateral_error_ / 0.02;
-  heading_error_dot_ = heading_error_ / 0.02;
-}
+  lateral_error_dot_ = (lateral_error_ - last_lateral_error_) / 0.02;
+  heading_error_dot_ = (heading_error_ - last_heading_erro_) / 0.02;
+  last_lateral_error_ = lateral_error_;
+  last_heading_erro_ = heading_error_;
+} 
 
 void LatController::updateStateSpaceModel(double vx) {
   vx = std::max(std::abs(vx), 0.01);
@@ -187,6 +198,7 @@ void LatController::updateStateSpaceModel(double vx) {
   Eigen::MatrixXd matrix_i = Eigen::MatrixXd::Identity(4, 4);
   matrix_ad_ = (matrix_i - ts_ * 0.5 * matrix_a_).inverse() *
                (matrix_i + ts_ * 0.5 * matrix_a_);
+
   // update state matrix
   matrix_state_(0, 0) = lateral_error_;
   matrix_state_(1, 0) = lateral_error_dot_;
@@ -210,8 +222,8 @@ void LatController::solveLqrProblem(
   // Calculate Matrix Difference Riccati Equation, initialize P and Q
   Eigen::MatrixXd P = Q;
   uint num_iteration = 0;
-  double diff = 0.0;
-  while (num_iteration++ < max_num_iteration) {
+  double diff = std::numeric_limits<double>::max();
+  while (num_iteration++ < max_num_iteration && diff > tolerance) {
     Eigen::MatrixXd P_next =
         AT * P * A - AT * P * B * (R + BT * P * B).inverse() * BT * P * A + Q;
     // check the difference between P and P_next
@@ -224,10 +236,10 @@ void LatController::solveLqrProblem(
   }
 
   if (num_iteration >= max_num_iteration) {
-    std::cout << "lqr_not_convergence, last_diff_is:" << diff;
+    std::cout << "lqr_not_convergence, last_diff_is:" << diff << std::endl;
   } else {
     std::cout << "Number of iterations until convergence: " << num_iteration
-              << ", max difference: " << diff;
+              << ", max difference: " << diff << std::endl;
   }
   *ptr_K = (R + BT * P * B).inverse() * BT * P * A;
 }

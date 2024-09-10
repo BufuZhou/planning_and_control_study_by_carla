@@ -123,6 +123,7 @@ add_executable(${PROJECT_NAME}_node
 src/control_main.cpp
 src/control_node.cpp
 src/lat_controller.cpp
+src/mpc_controller.cpp
 ${PROTO_GENERATE_SRC}
 )
 

@@ -7,6 +7,8 @@
 #include <iostream>
 
 #include "common_msgs/msg/pose.hpp"
+#include "math/mpc_osqp.hpp"
+#include "log.hpp"
 // #include "control/digital_filter_coefficients.hpp"
 #include "rclcpp/logging.hpp"
 
@@ -111,9 +113,42 @@ void MPCController::ComputeControlCommand(
 
 
   updateStateSpaceModel(vx_);
-  // solveLqrProblem(matrix_ad_, matrix_bd_, matrix_q_, matrix_r_, lqr_eps_,
-  //                 lqr_max_iteration_, &matrix_k_);
-  // feedback = - K * state
+
+  Eigen::MatrixXd lower_bound(controls_, 1);
+  lower_bound << -wheel_single_direction_max_degree_, max_deceleration_;
+
+  Eigen::MatrixXd upper_bound(controls_, 1);
+  upper_bound << wheel_single_direction_max_degree_, max_acceleration_;
+
+  const double max = std::numeric_limits<double>::max();
+  Eigen::MatrixXd lower_state_bound(6, 1);
+  Eigen::MatrixXd upper_state_bound(6, 1);
+  // lateral_error, lateral_error_rate, heading_error, heading_error_rate
+  // station_error, station_error_rate
+  lower_state_bound << -1.0 * max, -1.0 * max, -1.0 * M_PI, -1.0 * max,
+      -1.0 * max, -1.0 * max;
+  upper_state_bound << max, max, M_PI, max, max, max;
+
+  Eigen::MatrixXd reference_state = Eigen::MatrixXd::Zero(6, 1);
+  std::vector<Eigen::MatrixXd> reference(horizon_, reference_state);
+
+  ::common::math::MpcOsqp mpc_osqp(
+      matrix_ad_, matrix_bd_, matrix_q_, matrix_r_,
+      matrix_state_, lower_bound, upper_bound, lower_state_bound,
+      upper_state_bound, reference_state, mpc_max_iteration_, horizon_,
+      mpc_eps_);
+
+  std::vector<double> control_cmd(controls_, 0);
+  Eigen::MatrixXd control_matrix = Eigen::MatrixXd::Zero(controls_, 1);
+  std::vector<Eigen::MatrixXd> control(horizon_, control_matrix);
+  if (!mpc_osqp.Solve(&control_cmd)) {
+    AERROR << "MPC OSQP solver failed";
+  } else {
+    ADEBUG << "MPC OSQP problem solved! ";
+    control[0](0, 0) = control_cmd.at(0);
+    control[0](1, 0) = control_cmd.at(1);
+  }
+
   steer_angle_feedback_ = -(matrix_k_ * matrix_state_)(0, 0);
   computeFeedforward(vx_);
   steering_angle_command_ = steer_angle_feedback_;

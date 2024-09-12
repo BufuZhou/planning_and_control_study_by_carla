@@ -68,6 +68,14 @@ class MPCController {
   // parameters for lqr solver
   double mpc_eps_;             // iteration maximum error
   double mpc_max_iteration_;   // maximum number of iterations
+  // the maximum turn of vehicle wheel
+  double wheel_single_direction_max_degree_ = 30.0;
+  double max_deceleration_ = -6.0;
+  double max_acceleration_ = 2.0;
+
+  const int controls_ = 2;
+  const int horizon_ = 10;
+
   Eigen::MatrixXd matrix_a_;   // vehicle state matrix
   Eigen::MatrixXd matrix_ad_;  // vehicle state matrix (discrete-time)
   Eigen::MatrixXd matrix_b_;   // control matrix

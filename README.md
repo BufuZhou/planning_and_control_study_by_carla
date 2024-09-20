@@ -1,4 +1,3 @@
-# planning_and_control_study_by_carla
 # Environmental requirements
 ## Ubuntu 20.04
 
@@ -6,7 +5,8 @@
 https://github.com/carla-simulator/carla/releases
 
 ## Carla-ros-bridge 
-https://github.com/carla-simulator/ros-bridge
+[安装地址：](https://github.com/carla-simulator/ros-bridge)
+
 Update CARLA version to 0.9.13 (#630) e9063d97ff5a724f76adbb1b852dc71da1dcfeec
 
 # install

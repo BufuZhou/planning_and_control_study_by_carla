@@ -10,10 +10,10 @@ int main(int argc, char * argv[]) {
   FLAGS_log_dir = "/home/lifanjie/glog";
   FLAGS_alsologtostderr = 1;              // 日志同时输出到stderr
 
-
   rclcpp::init(argc, argv);
   rclcpp::spin(std::make_shared<control::ControlNode>());
   rclcpp::shutdown();
+  // 关闭glog
   google::ShutdownGoogleLogging();
   return 0;
 }

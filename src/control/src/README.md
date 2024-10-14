@@ -1,3 +1,4 @@
+
 # 物理模型
 ## 横向模型
 参考书籍Vehicle Dynamics and Control by Rajesh Rajamani中的第二章。
@@ -253,6 +254,113 @@ $$A_k = (I - \frac{A}{2})^{-1}(I + \frac{A}{2}), \quad B_k = BT, \quad C_k = CT$
 上述公式在代码中对应的变量具体如下：
 
 matrix_state_ = $x_k$, matrix_ad_ = $A_k$,matrix_bd_ = B_k,matrix_cd_ = $C_k$
+
+# 模型预测计算原理
+https://ww2.mathworks.cn/help/mpc/gs/what-is-mpc.html
+
+模型预测控制属于全模型控制的一种方法，是现代控制的重要方法。其核心是基于最优化的方法求解出所需的控制输出。这里的模型通常指的是物理模型，而不是AI中的模型。mpc控制具体计算原理推导如下：
+
+前面章节中推导的离散物理模型如下：
+$$x_{k+1} = A_kx_k + B_ku_k + C_k$$
+这里作了一个重要的简化处理，系统矩阵$A_k$，控制矩阵$B_k$，常量矩阵$C_k$保持不变,即:
+$$
+A_k = A_{k+1} = A_{k+2} = ... = A_{k+p}  \\
+B_k = B_{k+1} = B_{k+2} = ... = B_{k+p}  \\
+C_k = C_{k+1} = C_{k+2} = ... = B_{k+p}  \\
+$$
+
+假定当前时刻为$k$，预测的步长为$p$，则根据上述公式可以推导出下列公式：
+$$
+x_{k+2} = A_{k+1}x_{k+1} + B_{k+1}u_{k+1} + C_{k+1} \\
+x_{k+2} = A_{k+1}(A_kx_k + B_ku_k + C_k) + B_{k+1}u_{k+1} + C_{k+1} \\
+$$
+进行简化处理$A_{k+1} = A_k$，$B_{k+1} = B_k$，$C_{k+1} = C_k$，则有：
+$$
+x_{k+2} = A_k(A_kx_k + B_ku_k + C_k) + B_ku_{k+1} + C_k \\
+x_{k+2} = A_k^2x_k + A_kB_ku_k + A_kC_k + B_ku_{k+1} + C_k \\
+x_{k+2} = A_k^2x_k + A_kB_ku_k + B_ku_{k+1} + A_kC_k + C_k \\
+$$
+同理可得$x_{k+3}$：
+$$
+x_{k+3} = A_{k+2}x_{k+2} + B_{k+2}u_{k+2} + C_{k+2} \\
+x_{k+3} = A_{k+2}(A_{k+1}x_{k+1} + B_{k+1}u_{k+1} + C_{k+1}) + B_{k+2}u_{k+2} + C_{k+2} \\
+$$
+进行简化处理$A_{k+2} = A_k$，$B_{k+2} = B_k$，$C_{k+2} = C_k$，则有：
+$$
+x_{k+3} = A_k(A_k^2x_k + A_kB_ku_k + A_kC_k + B_ku_{k+1} + C_k) + B_ku_{k+2} + C_k \\
+x_{k+3} = A_k^3x_k + A_k^2B_ku_k + A_kB_ku_{k+1} + B_ku_{k+2} + A_k^2C_k + A_kC_k + C_k \\
+$$
+
+同理可得$x_{k+4}$:
+$$
+x_{k+4} = A_{k+3}x_{k+3} + B_{k+3}u_{k+3} + C_{k+3} \\
+x_{k+4} = A_{k+3}(A_{k+2}x_{k+2} + B_{k+2}u_{k+2} + C_{k+2}) + B_{k+3}u_{k+3} + C_{k+3} \\
+$$
+进行简化处理$A_{k+3} = A_k$，$B_{k+2} = B_k$，$C_{k+2} = C_k$，则有：
+$$
+x_{k+4} = A_k(A_k^3x_k + A_k^2B_ku_k + A_kB_ku_{k+1} + B_ku_{k+2} + A_k^2C_k + A_kC_k + C_k) + B_ku_{k+3} + C_k \\
+x_{k+4} = A_k^4x_k + A_k^3B_ku_k + A_k^2B_ku_{k+1} + A_kB_ku_{k+2} + B_ku_{k+3} + A_k^3C_k + A_k^2C_k + A_kC_k+ C_k \\
+$$
+
+根据上述递推关系，对于预测的步长为$x_p$则有：
+$$ x_{k+p} = A_k^px_k + A_k^{p-1}B_ku_k + A_k^{p-2}B_ku_{k+1} + A_k^{p-3}B_ku_{k+2} + A_k^{p-4}B_ku_{k+3} +... + B_ku_{k+p-1} + A_k^{p-1}C_k + A_k^{p-2}C_k + ... + C_k $$
+
+用矩阵表示上述关系则有：
+$$
+\begin{bmatrix} 
+x_{k+1} \\ 
+x_{k+2} \\ 
+x_{k+3} \\
+x_{k+4} \\
+\vdots \\
+x_{k+p} \\
+\end{bmatrix}
+\quad = \quad
+\begin{bmatrix} 
+A_k \\
+A_k^2 \\
+A_k^3 \\
+A_k^4 \\
+\vdots \\
+A_k^p \\
+\end{bmatrix}
+\times
+x_{k}
++
+\begin{bmatrix}
+B_k & 0 & 0 & 0 & \cdots & 0 \\
+A_kB_k & B_k & 0 & 0& \cdots & 0 \\
+A_k^2B_k & A_kB_k & B_k & 0 & \cdots & 0 \\
+A_k^3B_k & A_k^2B_k & A_kB_k & B_k & \cdots & 0 \\
+\vdots & \vdots & \vdots & \vdots & \ddots & \vdots \\
+A_k^{p-1}B_k & A_k^{p-2}B_k & A_k^{p-3}B_k & A_k^{p-4}B_k & \cdots & B_k \\
+\end{bmatrix}
+\times
+\begin{bmatrix} 
+u_{k} \\ 
+u_{k+1} \\ 
+u_{k+2} \\
+u_{k+3} \\
+\vdots \\
+u_{k+p-1} \\
+\end{bmatrix}
++
+\begin{bmatrix} 
+C_k \\ 
+A_kC_k + C_k \\ 
+A_k^2C_k + A_kC_k + C_k \\
+A_k^3C_k + A_k^2C_k + A_kC_k+ C_k \\
+\vdots \\
+A_k^{p-1}C_k + A_k^{p-2}C_k + ... + C_k \\
+\end{bmatrix}
+$$
+
+# OSQP求解
+参考OSQP官网中mpc示例：[Model predictive control (MPC)](https://osqp.org/docs/examples/mpc.html)
+
+首先定义一下优化问题。已知变量为$x_k$和$u_k$，分别表示当前时刻的控制误差和控制量。未知量是后续各个时刻的控制量，优化的目标是后续各个时刻的控制误差值最小。
+
+
 
 
 

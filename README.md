@@ -1,3 +1,7 @@
+# C++ style
+https://zh-google-styleguide.readthedocs.io/en/latest/google-cpp-styleguide/naming.html
+
+
 # Environmental requirements
 ## Ubuntu 20.04
 

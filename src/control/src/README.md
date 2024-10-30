@@ -354,12 +354,24 @@ A_k^3C_k + A_k^2C_k + A_kC_k+ C_k \\
 A_k^{p-1}C_k + A_k^{p-2}C_k + ... + C_k \\
 \end{bmatrix}
 $$
+上述方程简化为：
+$$
+X_k = Ax_k + BU_k 
+$$
 
 # OSQP求解
 参考OSQP官网中mpc示例：[Model predictive control (MPC)](https://osqp.org/docs/examples/mpc.html)
 
-首先定义一下优化问题。已知变量为$x_k$和$u_k$，分别表示当前时刻的控制误差和控制量。未知量是后续各个时刻的控制量，优化的目标是后续各个时刻的控制误差值最小。
+参考MPC文档：[Model Predictive Control](http://cse.lab.imtlucca.it/~bemporad/mpc_course.html)
 
+首先定义一下优化问题。已知变量为$x_k$和$u_k$，分别表示当前时刻的控制误差和控制量。未知量是后续各个时刻的控制量，优化的目标是后续各个时刻的控制误差值最小。代价函数如下：
+$$
+J(z, x_0) = x_p^TQ_px_p + \sum_{k=0}^{p-1}(x_k^TQ_kx + u_k^TRu_k)
+$$
+代入前面推导的公式，则有：
+$$
+J = 
+$$
 
 
 

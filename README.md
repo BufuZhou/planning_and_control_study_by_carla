@@ -1,21 +1,25 @@
-# planning_and_control_study_by_carla
 # Environmental requirements
+# code style (C++ google)
+sudo apt install clang-format
+sudo pip3 install cpplint
+
+clangd
+
 ## Ubuntu 20.04
+
+## ros2 tutorials
+http://dev.ros2.fishros.com/doc/Tutorials/Workspace/Creating-A-Workspace.html
+
+https://docs.ros.org/en/foxy/Tutorials/Beginner-CLI-Tools/Introducing-Turtlesim/Introducing-Turtlesim.html
 
 ## Carla 0.9.13
 https://github.com/carla-simulator/carla/releases
+https://carla.readthedocs.io/en/0.9.13/start_quickstart/
 
 ## Carla-ros-bridge 
 https://github.com/carla-simulator/ros-bridge
 Update CARLA version to 0.9.13 (#630) e9063d97ff5a724f76adbb1b852dc71da1dcfeec
 
-# install
-## ubuntu20.04
-
-## Carla 0.9.13
-https://carla.readthedocs.io/en/0.9.13/start_quickstart/
-
-## Carla-ros-bridge
 https://carla.readthedocs.io/projects/ros-bridge/en/latest/ros_installation_ros2/
 
 mkdir -p ~/carla-ros-bridge && cd ~/carla-ros-bridge
@@ -31,7 +35,6 @@ sudo apt-get install libgoogle-glog-dev
 
 version:
  apt show libgoogle-glog-dev
-
 
 ## gflag
 sudo apt install libgflags-dev
@@ -51,8 +54,6 @@ sudo apt install libeigen3-dev
 pkg-config --modversion eigen3
 apt show libeigen3-dev
 
-
-教程：
 https://eigen.tuxfamily.org/index.php?title=Main_Page
 
 https://github.com/ros2/eigen3_cmake_module
@@ -60,33 +61,33 @@ https://github.com/ros2/eigen3_cmake_module
 ## tbb parallel 
 sudo apt install libtbb-dev
 
+## gtest
 
-# code style (C++ google)
-sudo apt install clang-format
-sudo pip3 install cpplint
+## foxglove
+https://foxglove.dev/download
 
-clangd
+https://docs.foxglove.dev/docs/connecting-to-data/ros-foxglove-bridge
 
-# ROS tutorials
-http://dev.ros2.fishros.com/doc/Tutorials/Workspace/Creating-A-Workspace.html
 
-https://docs.ros.org/en/foxy/Tutorials/Beginner-CLI-Tools/Introducing-Turtlesim/Introducing-Turtlesim.html
+ros2 launch rosbridge_server rosbridge_websocket_launch.xml
 
+
+
+# ros2
 ## create package
 colcon build  --cmake-args
 colcon build --event-handlers console_direct+ --cmake-args -DCMAKE_VERBOSE_MAKEFILE=ON
+colcon build --packages-select vehicle control
 
 # Module
 # carla 0.9.13colcon build --event-handlers console_direct+ --cmake-args -DCMAKE_VERBOSE_MAKEFILE=ON
+
 
 cd ~/CARLA_0.9.13/
 ./CarlaUE4.sh
 
 or
 sh ~/CARLA_0.9.13/CarlaUE4.sh
-
-## ros2
-colcon build --packages-select vehicle control
 
 ## carla-ros-bridge
 carla ros中存在bug，需要进行一定修改
@@ -124,7 +125,7 @@ Yaw的位置不一样，需要进行调整
 
 
 
-##
+## run pnc node
 cd ~/planning_and_control_study_by_carla 
 source install/setup.bash
 ros2 launch control control_with_planning.launch.py 

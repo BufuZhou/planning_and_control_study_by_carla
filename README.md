@@ -36,6 +36,10 @@ sudo apt-get install libgoogle-glog-dev
 version:
  apt show libgoogle-glog-dev
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> e7acdde5872da09e1819baf8ec8e4c6ada57f72d
 ## gflag
 sudo apt install libgflags-dev
 
@@ -61,13 +65,18 @@ https://github.com/ros2/eigen3_cmake_module
 ## tbb parallel 
 sudo apt install libtbb-dev
 
+<<<<<<< HEAD
 ## gtest
+=======
+clangd
+>>>>>>> e7acdde5872da09e1819baf8ec8e4c6ada57f72d
 
 ## foxglove
 https://foxglove.dev/download
 
 https://docs.foxglove.dev/docs/connecting-to-data/ros-foxglove-bridge
 
+<<<<<<< HEAD
 
 ros2 launch rosbridge_server rosbridge_websocket_launch.xml
 
@@ -78,11 +87,19 @@ ros2 launch rosbridge_server rosbridge_websocket_launch.xml
 colcon build  --cmake-args
 colcon build --event-handlers console_direct+ --cmake-args -DCMAKE_VERBOSE_MAKEFILE=ON
 colcon build --packages-select vehicle control
+=======
+## create package
+colcon build  --cmake-args
+colcon build --event-handlers console_direct+ --cmake-args -DCMAKE_VERBOSE_MAKEFILE=ON
+>>>>>>> e7acdde5872da09e1819baf8ec8e4c6ada57f72d
 
 # Module
 # carla 0.9.13colcon build --event-handlers console_direct+ --cmake-args -DCMAKE_VERBOSE_MAKEFILE=ON
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> e7acdde5872da09e1819baf8ec8e4c6ada57f72d
 cd ~/CARLA_0.9.13/
 ./CarlaUE4.sh
 
@@ -125,7 +142,11 @@ Yaw的位置不一样，需要进行调整
 
 
 
+<<<<<<< HEAD
 ## run pnc node
+=======
+##
+>>>>>>> e7acdde5872da09e1819baf8ec8e4c6ada57f72d
 cd ~/planning_and_control_study_by_carla 
 source install/setup.bash
 ros2 launch control control_with_planning.launch.py 

@@ -23,7 +23,7 @@ class ControlNode : public rclcpp::Node {
  private:
   size_t count_;
   rclcpp::TimerBase::SharedPtr control_timer_;
-  rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::TimerBase::SharedPtr send_control_command_timer_;
   rclcpp::Publisher<common_msgs::msg::ControlCommand>::SharedPtr
     ego_vehicle_control_cmd_publisher_;
   rclcpp::Subscription<common_msgs::msg::Trajectory>::SharedPtr
